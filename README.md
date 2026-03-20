@@ -1,6 +1,6 @@
 # Agent Transfer Protocol (AGTP)
 
-**draft-hood-independent-agtp-00** | Informational | Independent Submission
+**draft-hood-independent-agtp-01** | Informational | Independent Submission
 
 > A dedicated application-layer protocol for autonomous AI agent traffic.
 
@@ -46,11 +46,11 @@ they define what agents say. AGTP defines how agent traffic moves.
 
 | Item | Status |
 |---|---|
-| Internet-Draft | `draft-hood-independent-agtp-00` — active |
-| IETF submission | Pending |
+| Internet-Draft | `draft-hood-independent-agtp-01` — active |
+| IETF submission | Submitted |
 | Working group | Independent submission (no WG assigned yet) |
 | Reference implementation | Planned (Python / Go) — contributions welcome |
-| Companion specs | `draft-hood-agtp-agent-cert-00` (pending), `draft-hood-agtp-standard-methods-00` (pending) |
+| Companion specs | `draft-hood-agtp-agent-cert-00` (pending), `draft-hood-agtp-standard-methods-00` (pending), `draft-hood-agtp-web3-bridge-00` (planned) |
 
 This repository is the working home for the AGTP specification.
 The I-D is under active development. Feedback, issues, and pull
@@ -60,10 +60,10 @@ requests are welcome.
 
 ## Repository Contents
 ```
-draft-hood-independent-agtp-00.md    kramdown-rfc source (edit this)
-draft-hood-independent-agtp-00.xml   RFC XML v3 (generated)
-draft-hood-independent-agtp-00.txt   Plain-text I-D (IETF submission format)
-draft-hood-independent-agtp-00.html  Rendered HTML (human-readable)
+draft-hood-independent-agtp-01.md    kramdown-rfc source (edit this)
+draft-hood-independent-agtp-01.xml   RFC XML v3 (generated)
+draft-hood-independent-agtp-01.txt   Plain-text I-D (IETF submission format)
+draft-hood-independent-agtp-01.html  Rendered HTML (human-readable)
 ```
 
 ---
@@ -126,18 +126,81 @@ identity at the transport layer.
 
 ---
 
+## New in v01: Agent Identity, URIs, and Registration
+
+### Agent Birth Certificate
+
+Every AGTP agent is issued an Agent Birth Certificate at registration
+time — a cryptographically signed identity document that establishes
+the agent's identity, owner, authorized scope, behavioral archetype,
+and governance zone before the agent takes any action. The Birth
+Certificate is the genesis record of the agent's existence. Its
+`certificate_hash` field is the basis for the agent's canonical
+256-bit Agent-ID. Authority is issued through the Birth Certificate;
+it is never self-assumed.
+
+Birth Certificate fields map directly to AGTP protocol headers on
+every request: `agent_id` → `Agent-ID`; `owner` → `Principal-ID`;
+`scope` → `Authority-Scope`.
+
+### URI Structure
+
+AGTP URIs are addresses, not filenames. The canonical forms are:
+
+```
+agtp://[256-bit-canonical-id]
+agtp://[domain.tld]/agents/[agent-label]
+agtp://agtp.[domain.tld]/agents/[agent-label]
+```
+
+Resolving an agent URI returns a signed **Agent Manifest Document**
+(`application/agtp+json`) derived from the agent's package. The
+manifest exposes identity, lifecycle state, trust tier, behavioral
+scope, and birth certificate fields. It never exposes executable
+content. File extensions (`.agent`, `.nomo`, `.agtp`) must not
+appear in canonical URIs.
+
+### Deployment Package Formats
+
+| Format | Type | Description |
+|---|---|---|
+| `.agent` | Open (patent pending) | Manifest + integrity hash + behavioral trust score |
+| `.nomo` | Governed (patent pending) | `.agent` + CA-signed cert chain + governance zone binding |
+| `.agtp` | Protocol-native (this spec) | Wire-level manifest document returned by URI resolution |
+
+The name `.nomo` derives from the Greek *nomos* (νόμος), meaning
+law or governance — an agent operating under cryptographically
+enforced behavioral constraints.
+
+### Trust Tiers
+
+| Tier | Verification | Package |
+|---|---|---|
+| 1 — Verified | DNS ownership challenge (RFC 8555) | `.nomo` required |
+| 2 — Org-Asserted | None | `.agent` or `.nomo` |
+| 3 — Experimental | None | Any; X- prefix required; not production-eligible |
+
+---
+
 ## Intellectual Property
 
 The **core AGTP specification** — all base methods, header fields,
 status codes, and IANA registrations defined in this document — is
 open and royalty-free.
 
-Certain **extensions** referenced in the specification — specifically
-the Agent Certificate extension and the ACTIVATE method — may be
-subject to pending patent applications by the author. The licensor
-is prepared to grant a royalty-free license to implementers for any
-patent claims covering these extensions, consistent with the IETF's
-IPR framework under RFC 8179.
+Certain **extensions and mechanisms** referenced in the specification
+may be subject to pending patent applications by the author,
+specifically:
+
+- The **Agent Certificate extension** (`draft-hood-agtp-agent-cert-00`)
+- The **ACTIVATE method**
+- The **Agent Birth Certificate mechanism**
+- The **`.agent` file format specification**
+- The **`.nomo` file format specification**
+
+The licensor is prepared to grant a royalty-free license to
+implementers for any patent claims covering these extensions,
+consistent with the IETF's IPR framework under RFC 8179.
 
 IPR disclosures are filed with the IETF Secretariat:
 https://datatracker.ietf.org/ipr/
@@ -147,16 +210,16 @@ https://datatracker.ietf.org/ipr/
 ## Rebuilding the I-D
 
 If you are contributing to the specification text, edit
-`draft-hood-independent-agtp-00.md` and rebuild:
+`draft-hood-independent-agtp-01.md` and rebuild:
 ```bash
 # Install toolchain (once)
 pip install xml2rfc
 gem install kramdown-rfc2629
 
 # Rebuild
-kramdown-rfc2629 draft-hood-independent-agtp-00.md > draft-hood-independent-aftp-00.xml
-xml2rfc draft-hood-independent-agtp-00.xml --text
-xml2rfc draft-hood-independent-agtp-00.xml --html
+kramdown-rfc2629 draft-hood-independent-agtp-01.md > draft-hood-independent-agtp-01.xml
+xml2rfc draft-hood-independent-agtp-01.xml --text
+xml2rfc draft-hood-independent-agtp-01.xml --html
 ```
 
 ---
