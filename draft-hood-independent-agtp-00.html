@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta content="Common,Latin" name="scripts">
 <meta content="initial-scale=1.0" name="viewport">
-<title>Agent Transfer Protocol (ATP)</title>
+<title>Agent Transfer Protocol (AGTP)</title>
 <meta content="Chris Hood" name="author">
 <meta content='
        AI agents and agentic systems generate a growing volume of intent-driven,
@@ -12,15 +12,15 @@ unstructured, and undifferentiated traffic that flows through HTTP
 indistinguishably from human-initiated requests. HTTP lacks the semantic
 vocabulary, observability primitives, and identity mechanisms required by
 agent systems operating at scale. Existing protocols described as "agent
-protocols" — including MCP, ACP, A2A, and ANP — are messaging-layer
+protocols" including MCP, ACP, A2A, and ANP, are messaging-layer
 constructs that presuppose HTTP as their transport. They do not address
 the underlying transport problem. 
-       This document defines the Agent Transfer Protocol (ATP): a dedicated
-application-layer protocol for AI agent traffic. ATP provides agent-native
+       This document defines the Agent Transfer Protocol (AGTP): a dedicated
+application-layer protocol for AI agent traffic. AGTP provides agent-native
 intent methods (QUERY, SUMMARIZE, BOOK, SCHEDULE, LEARN, DELEGATE,
 COLLABORATE, CONFIRM, ESCALATE, NOTIFY), protocol-level agent identity
 and authority headers, and a status code vocabulary designed for the
-conditions AI agent systems encounter. ATP SHOULD prefer QUIC for new
+conditions AI agent systems encounter. AGTP SHOULD prefer QUIC for new
 implementations and MUST support TCP/TLS for compatibility and fallback.
 It is designed to be composable with existing agent frameworks, not to
 replace them. 
@@ -30,24 +30,23 @@ replace them.
 <meta content="agentic systems" name="keyword">
 <meta content="protocol" name="keyword">
 <meta content="agent traffic" name="keyword">
-<meta content="autonomous agents" name="keyword">
-<meta content="draft-hood-independent-atp-00" name="ietf.draft">
+<meta content="agent transfer" name="keyword">
+<meta content="draft-hood-independent-agtp-00" name="ietf.draft">
 <!-- Generator version information:
   xml2rfc 3.32.0
-    Python 3.12.3
+    Python 3.13.9
     ConfigArgParse 1.7.5
     google-i18n-address 3.1.1
     intervaltree 3.2.1
     Jinja2 3.1.6
     lxml 6.0.2
-    platformdirs 4.9.2
+    platformdirs 4.5.1
     pycountry 26.2.16
-    pypdf 5.9.0
     PyYAML 6.0.3
     requests 2.32.5
     wcwidth 0.6.0
 -->
-<link href="draft-hood-independent-atp-00.xml" rel="alternate" type="application/rfc+xml">
+<link href="draft-hood-independent-agtp-00.xml" rel="alternate" type="application/rfc+xml">
 <link href="#copyright" rel="license">
 <style type="text/css">/*
 
@@ -1235,7 +1234,7 @@ li > p:last-of-type:only-child {
 <table class="ears">
 <thead><tr>
 <td class="left">Internet-Draft</td>
-<td class="center">ATP</td>
+<td class="center">AGTP</td>
 <td class="right">March 2026</td>
 </tr></thead>
 <tfoot><tr>
@@ -1250,7 +1249,7 @@ li > p:last-of-type:only-child {
 <dt class="label-workgroup">Workgroup:</dt>
 <dd class="workgroup">Independent Submission</dd>
 <dt class="label-internet-draft">Internet-Draft:</dt>
-<dd class="internet-draft">draft-hood-independent-atp-00</dd>
+<dd class="internet-draft">draft-hood-independent-agtp-00</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
 <time datetime="2026-03-19" class="published">19 March 2026</time>
@@ -1268,7 +1267,7 @@ li > p:last-of-type:only-child {
 </dd>
 </dl>
 </div>
-<h1 id="title">Agent Transfer Protocol (ATP)</h1>
+<h1 id="title">Agent Transfer Protocol (AGTP)</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
 <p id="section-abstract-1">AI agents and agentic systems generate a growing volume of intent-driven,
@@ -1276,15 +1275,15 @@ unstructured, and undifferentiated traffic that flows through HTTP
 indistinguishably from human-initiated requests. HTTP lacks the semantic
 vocabulary, observability primitives, and identity mechanisms required by
 agent systems operating at scale. Existing protocols described as "agent
-protocols" — including MCP, ACP, A2A, and ANP — are messaging-layer
+protocols" including MCP, ACP, A2A, and ANP, are messaging-layer
 constructs that presuppose HTTP as their transport. They do not address
 the underlying transport problem.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
-<p id="section-abstract-2">This document defines the Agent Transfer Protocol (ATP): a dedicated
-application-layer protocol for AI agent traffic. ATP provides agent-native
+<p id="section-abstract-2">This document defines the Agent Transfer Protocol (AGTP): a dedicated
+application-layer protocol for AI agent traffic. AGTP provides agent-native
 intent methods (QUERY, SUMMARIZE, BOOK, SCHEDULE, LEARN, DELEGATE,
 COLLABORATE, CONFIRM, ESCALATE, NOTIFY), protocol-level agent identity
 and authority headers, and a status code vocabulary designed for the
-conditions AI agent systems encounter. ATP SHOULD prefer QUIC for new
+conditions AI agent systems encounter. AGTP SHOULD prefer QUIC for new
 implementations and MUST support TCP/TLS for compatibility and fallback.
 It is designed to be composable with existing agent frameworks, not to
 replace them.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
@@ -1390,7 +1389,7 @@ replace them.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
                 <p id="section-toc.1-1.4.2.4.1"><a href="#section-4.4" class="auto internal xref">4.4</a>.  <a href="#name-the-critical-distinction-me" class="internal xref">The Critical Distinction: Messaging vs. Transport</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.5">
-                <p id="section-toc.1-1.4.2.5.1"><a href="#section-4.5" class="auto internal xref">4.5</a>.  <a href="#name-atp-positioning-the-propose" class="internal xref">ATP Positioning: The Proposed Stack</a></p>
+                <p id="section-toc.1-1.4.2.5.1"><a href="#section-4.5" class="auto internal xref">4.5</a>.  <a href="#name-agtp-positioning-the-propos" class="internal xref">AGTP Positioning: The Proposed Stack</a></p>
 </li>
             </ul>
 </li>
@@ -1445,7 +1444,7 @@ replace them.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
                     <p id="section-toc.1-1.5.2.8.2.5.1"><a href="#section-5.8.5" class="auto internal xref">5.8.5</a>.  <a href="#name-scaling-considerations" class="internal xref">Scaling Considerations</a></p>
 </li>
                   <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.8.2.6">
-                    <p id="section-toc.1-1.5.2.8.2.6.1"><a href="#section-5.8.6" class="auto internal xref">5.8.6</a>.  <a href="#name-iana-considerations-for-the" class="internal xref">IANA Considerations for the atp:// URI Scheme</a></p>
+                    <p id="section-toc.1-1.5.2.8.2.6.1"><a href="#section-5.8.6" class="auto internal xref">5.8.6</a>.  <a href="#name-iana-considerations-for-the" class="internal xref">IANA Considerations for the agtp:// URI Scheme</a></p>
 </li>
                 </ul>
 </li>
@@ -1576,10 +1575,10 @@ replace them.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
                 <p id="section-toc.1-1.8.2.1.1"><a href="#section-8.1" class="auto internal xref">8.1</a>.  <a href="#name-port-assignment" class="internal xref">Port Assignment</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.2">
-                <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-atp-method-registry" class="internal xref">ATP Method Registry</a></p>
+                <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-agtp-method-registry" class="internal xref">AGTP Method Registry</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.3">
-                <p id="section-toc.1-1.8.2.3.1"><a href="#section-8.3" class="auto internal xref">8.3</a>.  <a href="#name-atp-status-code-registry" class="internal xref">ATP Status Code Registry</a></p>
+                <p id="section-toc.1-1.8.2.3.1"><a href="#section-8.3" class="auto internal xref">8.3</a>.  <a href="#name-agtp-status-code-registry" class="internal xref">AGTP Status Code Registry</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.4">
                 <p id="section-toc.1-1.8.2.4.1"><a href="#section-8.4" class="auto internal xref">8.4</a>.  <a href="#name-header-field-registry" class="internal xref">Header Field Registry</a></p>
@@ -1604,7 +1603,7 @@ replace them.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
             <p id="section-toc.1-1.10.1"><a href="#appendix-A" class="auto internal xref">Appendix A</a>.  <a href="#name-authority-scope-format" class="internal xref">Authority-Scope Format</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
-            <p id="section-toc.1-1.11.1"><a href="#appendix-B" class="auto internal xref">Appendix B</a>.  <a href="#name-example-atp-wire-formats" class="internal xref">Example ATP Wire Formats</a></p>
+            <p id="section-toc.1-1.11.1"><a href="#appendix-B" class="auto internal xref">Appendix B</a>.  <a href="#name-example-agtp-wire-formats" class="internal xref">Example AGTP Wire Formats</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11.2.1">
                 <p id="section-toc.1-1.11.2.1.1"><a href="#appendix-B.1" class="auto internal xref">B.1</a>.  <a href="#name-query-request-and-response" class="internal xref">QUERY Request and Response</a></p>
@@ -1639,7 +1638,7 @@ replace them.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
 aware that certain extensions to this specification -- specifically the
 Agent Certificate extension (Section 7.2) and the ACTIVATE method --
 may be subject to pending patent applications by the author.  The core
-ATP specification is intended for open implementation without royalty
+AGTP specification is intended for open implementation without royalty
 obligation.  The licensor is prepared to grant a royalty-free license
 to implementers consistent with <span>[<a href="#RFC8179" class="cite xref">RFC8179</a>]</span>.  IPR disclosures:
 https://datatracker.ietf.org/ipr/ -- see also Section 7.7.<a href="#section-1-1" class="pilcrow">¶</a></p>
@@ -1650,9 +1649,9 @@ https://datatracker.ietf.org/ipr/ -- see also Section 7.7.<a href="#section-1-1"
         </h3>
 <p id="section-1.1-1">The deployment of AI agents and multi-agent systems is accelerating
 across enterprise, research, and consumer contexts. These systems execute
-complex, multi-step workflows — querying data sources, booking resources,
+complex, multi-step workflows, querying data sources, booking resources,
 delegating subtasks to peer agents, and escalating decisions to human
-principals — with minimal or no human supervision per transaction.<a href="#section-1.1-1" class="pilcrow">¶</a></p>
+principals, with minimal or no human supervision per transaction.<a href="#section-1.1-1" class="pilcrow">¶</a></p>
 <p id="section-1.1-2">Unlike human-initiated web traffic, agent-generated traffic is dynamic,
 high-frequency, intent-driven, and often stateful across sequences of
 related requests. The infrastructure carrying this traffic was not
@@ -1667,8 +1666,8 @@ designed with these properties in mind.<a href="#section-1.1-2" class="pilcrow">
 <p id="section-1.2-1">HTTP has served as the internet's primary application-layer transport for
 over three decades. Its evolution through HTTP/2 <span>[<a href="#RFC7540" class="cite xref">RFC7540</a>]</span> and HTTP/3
 <span>[<a href="#RFC9114" class="cite xref">RFC9114</a>]</span> has improved performance, multiplexing, and latency. However,
-the fundamental model of HTTP — stateless, resource-oriented,
-human-initiated request/response — creates specific failures when applied
+the fundamental model of HTTP being stateless, resource-oriented,
+human-initiated request/response, creates specific failures when applied
 to agentic systems at scale:<a href="#section-1.2-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-1.2-2.1">
@@ -1680,7 +1679,7 @@ instrumentation.<a href="#section-1.2-2.1.1" class="pilcrow">¶</a></p>
           <li class="normal" id="section-1.2-2.2">
             <p id="section-1.2-2.2.1">Method vocabulary mismatch: HTTP's method set (GET, POST, PUT, DELETE,
 PATCH) describes resource operations. Agent traffic expresses purposeful
-intent — summarize, book, delegate, escalate. The mismatch forces intent
+intent, summarize, book, delegate, escalate. The mismatch forces intent
 into request bodies, invisible to protocol-level handlers.<a href="#section-1.2-2.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-1.2-2.3">
@@ -1710,23 +1709,28 @@ registration procedure, meaning new methods require a full IETF consensus
 process and must be backward-compatible with existing HTTP implementations.
 Adding intent-based verbs (SUMMARIZE, DELEGATE, ESCALATE) to HTTP would
 require every HTTP client, server, proxy, and middleware component to ignore
-or handle unknown methods gracefully — a compatibility constraint that limits
+or handle unknown methods gracefully, a compatibility constraint that limits
 how agent-specific semantics can be expressed at the protocol level.<a href="#section-1.3-2" class="pilcrow">¶</a></p>
 <p id="section-1.3-3">Second, HTTP carries decades of backward-compatibility constraints. Features
 such as persistent agent identity headers, authority scope declarations, and
 session-level governance semantics would require HTTP extensions that interact
 unpredictably with existing caching, proxy, and CDN behavior designed for
 human-generated traffic patterns.<a href="#section-1.3-3" class="pilcrow">¶</a></p>
-<p id="section-1.3-4">Third, the observability goal — making agent traffic distinguishable from
-human traffic at the infrastructure layer — cannot be achieved by adding
+<p id="section-1.3-4">Third, the observability goal making agent traffic distinguishable from
+human traffic at the infrastructure layer cannot be achieved by adding
 fields to HTTP. Infrastructure components route and filter HTTP traffic
 based on methods and headers that are identical across agent and human
 requests. A protocol-level separation is necessary to give infrastructure
 the signal it needs.<a href="#section-1.3-4" class="pilcrow">¶</a></p>
-<p id="section-1.3-5">ATP is therefore designed as a dedicated protocol rather than an HTTP
-extension. HTTP and ATP coexist: human traffic continues to flow over
-HTTP; agent traffic flows over ATP. The two protocols serve different
+<p id="section-1.3-5">AGTP is therefore designed as a dedicated protocol rather than an HTTP
+extension. HTTP and AGTP coexist: human traffic continues to flow over
+HTTP; agent traffic flows over AGTP. The two protocols serve different
 classes of network participant.<a href="#section-1.3-5" class="pilcrow">¶</a></p>
+<p id="section-1.3-6">Note: The abbreviation AGTP is used in this document to distinguish 
+the Agent Transfer Protocol from the Authenticated Transfer Protocol 
+(ATP) working group currently proposed within the IETF. The URI 
+scheme agtp:// is proposed for IANA registration as a distinct and 
+unregistered scheme.<a href="#section-1.3-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="motivation-for-a-dedicated-protocol">
@@ -1737,7 +1741,7 @@ classes of network participant.<a href="#section-1.3-5" class="pilcrow">¶</a></
 <p id="section-1.4-1">These limitations are architectural, not implementational. They cannot be
 resolved by better middleware or application code layered on HTTP. They
 require a protocol designed from first principles for AI agent systems.<a href="#section-1.4-1" class="pilcrow">¶</a></p>
-<p id="section-1.4-2">ATP is that protocol. It provides a dedicated transport environment for
+<p id="section-1.4-2">AGTP is that protocol. It provides a dedicated transport environment for
 agent traffic with: native intent-based methods, mandatory agent identity
 headers, protocol-level authority scope declaration, and a status code
 vocabulary for the conditions autonomous systems encounter.<a href="#section-1.4-2" class="pilcrow">¶</a></p>
@@ -1748,14 +1752,14 @@ vocabulary for the conditions autonomous systems encounter.<a href="#section-1.4
         <h3 id="name-scope-and-target-audience">
 <a href="#section-1.5" class="section-number selfRef">1.5. </a><a href="#name-scope-and-target-audience" class="section-name selfRef">Scope and Target Audience</a>
         </h3>
-<p id="section-1.5-1">This document covers ATP architecture, design principles, stack position,
+<p id="section-1.5-1">This document covers AGTP architecture, design principles, stack position,
 request and response header format, agent-native method definitions and
 semantics, status code vocabulary, security considerations, and IANA
 considerations.<a href="#section-1.5-1" class="pilcrow">¶</a></p>
 <p id="section-1.5-2">The Agent Certificate extension for cryptographic binding of agent
-identity to ATP header fields is described at a high level in Section 7.2.
+identity to AGTP header fields is described at a high level in Section 7.2.
 Full specification is provided in a separate companion document:
-<span>[<a href="#ATP-CERT" class="cite xref">ATP-CERT</a>]</span>. That extension may be subject to pending intellectual
+<span>[<a href="#AGTP-CERT" class="cite xref">AGTP-CERT</a>]</span>. That extension may be subject to pending intellectual
 property claims; see Section 7.7 and the IPR Notice preceding the Abstract.<a href="#section-1.5-2" class="pilcrow">¶</a></p>
 <p id="section-1.5-3">Target audience: AI agent developers, protocol designers, cloud and network
 infrastructure providers, enterprise security and compliance architects, and
@@ -1789,7 +1793,7 @@ is accountable for its actions.<a href="#section-2-2.4.1" class="pilcrow">¶</a>
         <dd class="break"></dd>
 <dt id="section-2-2.5">Agent-ID:</dt>
         <dd style="margin-left: 1.5em" id="section-2-2.6">
-          <p id="section-2-2.6.1">A unique identifier for a specific agent instance, present in all ATP
+          <p id="section-2-2.6.1">A unique identifier for a specific agent instance, present in all AGTP
 request headers.<a href="#section-2-2.6.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
@@ -1806,7 +1810,7 @@ authorized to take, in the format domain:action or domain:*.<a href="#section-2-
         <dd class="break"></dd>
 <dt id="section-2-2.11">Intent Method:</dt>
         <dd style="margin-left: 1.5em" id="section-2-2.12">
-          <p id="section-2-2.12.1">An ATP method name expressing the agent's purpose, as distinguished from
+          <p id="section-2-2.12.1">An AGTP method name expressing the agent's purpose, as distinguished from
 HTTP resource-operation verbs.<a href="#section-2-2.12.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
@@ -1830,15 +1834,15 @@ purposes.<a href="#section-2-2.18.1" class="pilcrow">¶</a></p>
         <dd class="break"></dd>
 <dt id="section-2-2.19">Session:</dt>
         <dd style="margin-left: 1.5em" id="section-2-2.20">
-          <p id="section-2-2.20.1">An ATP persistent connection context shared across multiple method
+          <p id="section-2-2.20.1">An AGTP persistent connection context shared across multiple method
 invocations within a single agent workflow.<a href="#section-2-2.20.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 <dt id="section-2-2.21">SEP (Scope-Enforcement Point):</dt>
         <dd style="margin-left: 1.5em" id="section-2-2.22">
-          <p id="section-2-2.22.1">An ATP-aware infrastructure component — load balancer, gateway, proxy —
+          <p id="section-2-2.22.1">An AGTP-aware infrastructure component, load balancer, gateway, and proxy,
 that enforces Authority-Scope compliance without application-layer access.
-Requires the Agent Certificate extension (<span>[<a href="#ATP-CERT" class="cite xref">ATP-CERT</a>]</span>).<a href="#section-2-2.22.1" class="pilcrow">¶</a></p>
+Requires the Agent Certificate extension (<span>[<a href="#AGTP-CERT" class="cite xref">AGTP-CERT</a>]</span>).<a href="#section-2-2.22.1" class="pilcrow">¶</a></p>
 </dd>
       <dd class="break"></dd>
 </dl>
@@ -1849,7 +1853,7 @@ Requires the Agent Certificate extension (<span>[<a href="#ATP-CERT" class="cite
       <h2 id="name-problem-statement">
 <a href="#section-3" class="section-number selfRef">3. </a><a href="#name-problem-statement" class="section-name selfRef">Problem Statement</a>
       </h2>
-<p id="section-3-1">ATP is motivated by three distinct, compounding failures in how current
+<p id="section-3-1">AGTP is motivated by three distinct, compounding failures in how current
 internet infrastructure handles AI agent traffic.<a href="#section-3-1" class="pilcrow">¶</a></p>
 <div id="problem-1-undifferentiated-agent-traffic-on-http">
 <section id="section-3.1">
@@ -1859,11 +1863,11 @@ internet infrastructure handles AI agent traffic.<a href="#section-3-1" class="p
 <p id="section-3.1-1">AI agents generate intent-driven, structured traffic that is functionally
 invisible to the infrastructure it traverses. This traffic flows through
 HTTP alongside human traffic with no protocol-level differentiation.
-Observability failure, routing inefficiency, and security blindness result
-— operators cannot determine what fraction of traffic is agent-generated
+Observability failure, routing inefficiency, and security blindness result, 
+operators cannot determine what fraction of traffic is agent-generated
 without application-layer instrumentation that is expensive, inconsistent,
 and easy to circumvent.<a href="#section-3.1-1" class="pilcrow">¶</a></p>
-<p id="section-3.1-2">ATP response: a dedicated protocol environment for agent traffic.
+<p id="section-3.1-2">AGTP response: a dedicated protocol environment for agent traffic.
 Infrastructure can distinguish, route, monitor, and govern agent traffic
 natively.<a href="#section-3.1-2" class="pilcrow">¶</a></p>
 </section>
@@ -1875,11 +1879,11 @@ natively.<a href="#section-3.1-2" class="pilcrow">¶</a></p>
         </h3>
 <p id="section-3.2-1">AI agents operate on intent. HTTP's method vocabulary was designed to
 describe operations on resources, not purposeful action. When an agent
-intends to SUMMARIZE a document, BOOK a resource, and SCHEDULE a sequence
-— all three arrive as POST requests. The server receives identical verbs
+intends to SUMMARIZE a document, BOOK a resource, and SCHEDULE a sequence, 
+all three arrive as POST requests. The server receives identical verbs
 with meaningfully different intent buried in request bodies, invisible to
 any protocol-level handler.<a href="#section-3.2-1" class="pilcrow">¶</a></p>
-<p id="section-3.2-2">ATP response: a vocabulary of agent-native methods that express intent at
+<p id="section-3.2-2">AGTP response: a vocabulary of agent-native methods that express intent at
 the protocol level.<a href="#section-3.2-2" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -1893,7 +1897,7 @@ mechanism to verify who authorized this agent, what scope of authority it
 holds, which principal is accountable for its actions, or whether it is
 the agent it claims to be. Accountability gaps, authority laundering,
 auditability failure, and multi-agent trust collapse result.<a href="#section-3.3-1" class="pilcrow">¶</a></p>
-<p id="section-3.3-2">ATP response: agent identity and authority scope embedded in protocol
+<p id="section-3.3-2">AGTP response: agent identity and authority scope embedded in protocol
 headers on every request, with an optional Agent Certificate extension for
 cryptographic verification.<a href="#section-3.3-2" class="pilcrow">¶</a></p>
 </section>
@@ -1906,14 +1910,14 @@ cryptographic verification.<a href="#section-3.3-2" class="pilcrow">¶</a></p>
 <span id="name-summary-of-problems-address"></span><table class="center" id="table-1">
           <caption>
 <a href="#table-1" class="selfRef">Table 1</a>:
-<a href="#name-summary-of-problems-address" class="selfRef">Summary of Problems Addressed by ATP</a>
+<a href="#name-summary-of-problems-address" class="selfRef">Summary of Problems Addressed by AGTP</a>
           </caption>
 <thead>
             <tr>
               <th class="text-left" rowspan="1" colspan="1">#</th>
               <th class="text-left" rowspan="1" colspan="1">Problem</th>
               <th class="text-left" rowspan="1" colspan="1">Current Failure</th>
-              <th class="text-left" rowspan="1" colspan="1">ATP Response</th>
+              <th class="text-left" rowspan="1" colspan="1">AGTP Response</th>
             </tr>
           </thead>
           <tbody>
@@ -2018,9 +2022,9 @@ communication but does not address method semantics or identity.<a href="#sectio
           <dd class="break"></dd>
 <dt id="section-4.3-1.5">QUIC <span>[<a href="#RFC9000" class="cite xref">RFC9000</a>]</span>:</dt>
           <dd style="margin-left: 1.5em" id="section-4.3-1.6">
-            <p id="section-4.3-1.6.1">Modern multiplexed transport with reduced connection overhead. ATP
+            <p id="section-4.3-1.6.1">Modern multiplexed transport with reduced connection overhead. AGTP
 <strong>SHOULD</strong> prefer QUIC for new implementations. QUIC is a transport
-primitive; ATP is the application-layer protocol above it.<a href="#section-4.3-1.6.1" class="pilcrow">¶</a></p>
+primitive; AGTP is the application-layer protocol above it.<a href="#section-4.3-1.6.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
@@ -2031,22 +2035,22 @@ primitive; ATP is the application-layer protocol above it.<a href="#section-4.3-
         <h3 id="name-the-critical-distinction-me">
 <a href="#section-4.4" class="section-number selfRef">4.4. </a><a href="#name-the-critical-distinction-me" class="section-name selfRef">The Critical Distinction: Messaging vs. Transport</a>
         </h3>
-<p id="section-4.4-1">The most important positioning principle for ATP is the distinction between
+<p id="section-4.4-1">The most important positioning principle for AGTP is the distinction between
 messaging protocols and transport protocols. MCP, ACP, A2A, and ANP are
-messaging protocols — they define what agents say. ATP defines how agent
+messaging protocols, they define what agents say. AGTP defines how agent
 traffic moves.<a href="#section-4.4-1" class="pilcrow">¶</a></p>
 <p id="section-4.4-2">An analogy: SMTP is a messaging protocol that runs over TCP. SMTP does not
 replace TCP. Saying "TCP is unnecessary because SMTP exists" is a category
 error. The same logic applies here. MCP and its peers define agent messaging
-semantics. ATP defines the transport environment those messages move through.<a href="#section-4.4-2" class="pilcrow">¶</a></p>
+semantics. AGTP defines the transport environment those messages move through.<a href="#section-4.4-2" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="atp-positioning-the-proposed-stack">
+<div id="agtp-positioning-the-proposed-stack">
 <section id="section-4.5">
-        <h3 id="name-atp-positioning-the-propose">
-<a href="#section-4.5" class="section-number selfRef">4.5. </a><a href="#name-atp-positioning-the-propose" class="section-name selfRef">ATP Positioning: The Proposed Stack</a>
+        <h3 id="name-agtp-positioning-the-propos">
+<a href="#section-4.5" class="section-number selfRef">4.5. </a><a href="#name-agtp-positioning-the-propos" class="section-name selfRef">AGTP Positioning: The Proposed Stack</a>
         </h3>
-<span id="name-atp-in-the-protocol-stack"></span><div id="protocol-stack">
+<span id="name-agtp-in-the-protocol-stack"></span><div id="protocol-stack">
 <figure id="figure-1">
           <div class="alignLeft art-text artwork" id="section-4.5-1.1">
 <pre>
@@ -2055,7 +2059,7 @@ semantics. ATP defines the transport environment those messages move through.<a 
 +-----------------------------------------------------+
 |  Messaging Layer  (MCP / ACP / A2A)  [optional]     |
 +-----------------------------------------------------+
-|   ATP - Agent Transfer Protocol      [this spec]    |
+|   AGTP - Agent Transfer Protocol      [this spec]    |
 +-----------------------------------------------------+
 |            TLS 1.3+                  [mandatory]    |
 +-----------------------------------------------------+
@@ -2064,13 +2068,13 @@ semantics. ATP defines the transport environment those messages move through.<a 
 </pre>
 </div>
 <figcaption><a href="#figure-1" class="selfRef">Figure 1</a>:
-<a href="#name-atp-in-the-protocol-stack" class="selfRef">ATP in the Protocol Stack</a>
+<a href="#name-agtp-in-the-protocol-stack" class="selfRef">AGTP in the Protocol Stack</a>
           </figcaption></figure>
 </div>
-<p id="section-4.5-2">ATP is not a replacement for messaging protocols. Agents using MCP or A2A
-route those messages over ATP and gain transport-level observability and
-identity without modifying the messaging layer. ATP-native agents that do
-not use a separate messaging protocol interact with ATP methods directly.<a href="#section-4.5-2" class="pilcrow">¶</a></p>
+<p id="section-4.5-2">AGTP is not a replacement for messaging protocols. Agents using MCP or A2A
+route those messages over AGTP and gain transport-level observability and
+identity without modifying the messaging layer. AGTP-native agents that do
+not use a separate messaging protocol interact with AGTP methods directly.<a href="#section-4.5-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -2085,7 +2089,7 @@ not use a separate messaging protocol interact with ATP methods directly.<a href
         <h3 id="name-stack-position">
 <a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-stack-position" class="section-name selfRef">Stack Position</a>
         </h3>
-<p id="section-5.1-1">ATP is an application-layer protocol. It operates above the transport
+<p id="section-5.1-1">AGTP is an application-layer protocol. It operates above the transport
 layer (TCP, UDP, or QUIC) and is wrapped by TLS. It sits below any agent
 messaging protocol in deployments that use one.<a href="#section-5.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
@@ -2103,13 +2107,13 @@ infrastructure.<a href="#section-5.1-2.2.1" class="pilcrow">¶</a></p>
 implementor-defined reliability guarantees.<a href="#section-5.1-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-5.1-3">Suggested port assignment (subject to IANA assignment — see Section 8):<a href="#section-5.1-3" class="pilcrow">¶</a></p>
+<p id="section-5.1-3">Suggested port assignment (subject to IANA assignment. See Section 8):<a href="#section-5.1-3" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-5.1-4.1">
-            <p id="section-5.1-4.1.1">ATP/QUIC: port 8443 (proposed)<a href="#section-5.1-4.1.1" class="pilcrow">¶</a></p>
+            <p id="section-5.1-4.1.1">AGTP/QUIC: port 8443 (proposed)<a href="#section-5.1-4.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.1-4.2">
-            <p id="section-5.1-4.2.1">ATP/TCP+TLS: port 8080 (proposed)<a href="#section-5.1-4.2.1" class="pilcrow">¶</a></p>
+            <p id="section-5.1-4.2.1">AGTP/TCP+TLS: port 8080 (proposed)<a href="#section-5.1-4.2.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -2142,20 +2146,20 @@ not a human.<a href="#section-5.2-1.6.1" class="pilcrow">¶</a></p>
           <dd class="break"></dd>
 <dt id="section-5.2-1.7">Secure by default:</dt>
           <dd style="margin-left: 1.5em" id="section-5.2-1.8">
-            <p id="section-5.2-1.8.1">TLS 1.3 or higher is mandatory. Unencrypted ATP connections <strong>MUST</strong>
+            <p id="section-5.2-1.8.1">TLS 1.3 or higher is mandatory. Unencrypted AGTP connections <strong>MUST</strong>
 be rejected. Agent identity headers are present on every request.<a href="#section-5.2-1.8.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-5.2-1.9">Observable by design:</dt>
           <dd style="margin-left: 1.5em" id="section-5.2-1.10">
-            <p id="section-5.2-1.10.1">Native metadata in every ATP header provides the minimum information
+            <p id="section-5.2-1.10.1">Native metadata in every AGTP header provides the minimum information
 needed for routing, monitoring, and audit without application-layer
 instrumentation.<a href="#section-5.2-1.10.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 <dt id="section-5.2-1.11">Composable:</dt>
           <dd style="margin-left: 1.5em" id="section-5.2-1.12">
-            <p id="section-5.2-1.12.1">ATP works alongside existing agent messaging protocols without requiring
+            <p id="section-5.2-1.12.1">AGTP works alongside existing agent messaging protocols without requiring
 modification to those protocols.<a href="#section-5.2-1.12.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
@@ -2167,9 +2171,9 @@ modification to those protocols.<a href="#section-5.2-1.12.1" class="pilcrow">¶
         <h3 id="name-connection-model">
 <a href="#section-5.3" class="section-number selfRef">5.3. </a><a href="#name-connection-model" class="section-name selfRef">Connection Model</a>
         </h3>
-<p id="section-5.3-1">ATP uses a persistent session model by default, reflecting the reality that
+<p id="section-5.3-1">AGTP uses a persistent session model by default, reflecting the reality that
 agents typically execute multi-step workflows rather than isolated single
-requests. An ATP session is established with a single TLS handshake
+requests. An AGTP session is established with a single TLS handshake
 including agent identity assertion, persists across multiple method
 exchanges, carries a Session-ID header identifying the agent's task
 context, and terminates on explicit session close or inactivity timeout
@@ -2189,10 +2193,10 @@ individual request.<a href="#section-5.3-2" class="pilcrow">¶</a></p>
           <h4 id="name-request-headers">
 <a href="#section-5.4.1" class="section-number selfRef">5.4.1. </a><a href="#name-request-headers" class="section-name selfRef">Request Headers</a>
           </h4>
-<span id="name-atp-request-header-fields"></span><table class="center" id="table-2">
+<span id="name-agtp-request-header-fields"></span><table class="center" id="table-2">
             <caption>
 <a href="#table-2" class="selfRef">Table 2</a>:
-<a href="#name-atp-request-header-fields" class="selfRef">ATP Request Header Fields</a>
+<a href="#name-agtp-request-header-fields" class="selfRef">AGTP Request Header Fields</a>
             </caption>
 <thead>
               <tr>
@@ -2203,14 +2207,14 @@ individual request.<a href="#section-5.3-2" class="pilcrow">¶</a></p>
             </thead>
             <tbody>
               <tr>
-                <td class="text-left" rowspan="1" colspan="1">ATP-Version</td>
+                <td class="text-left" rowspan="1" colspan="1">AGTP-Version</td>
                 <td class="text-left" rowspan="1" colspan="1">
                   <strong>MUST</strong>
 </td>
-                <td class="text-left" rowspan="1" colspan="1">Protocol version. Current: ATP/1.0</td>
+                <td class="text-left" rowspan="1" colspan="1">Protocol version. Current: AGTP/1.0</td>
               </tr>
               <tr>
-                <td class="text-left" rowspan="1" colspan="1">ATP-Method</td>
+                <td class="text-left" rowspan="1" colspan="1">AGTP-Method</td>
                 <td class="text-left" rowspan="1" colspan="1">
                   <strong>MUST</strong>
 </td>
@@ -2281,10 +2285,10 @@ individual request.<a href="#section-5.3-2" class="pilcrow">¶</a></p>
           <h4 id="name-response-headers">
 <a href="#section-5.4.2" class="section-number selfRef">5.4.2. </a><a href="#name-response-headers" class="section-name selfRef">Response Headers</a>
           </h4>
-<span id="name-atp-response-header-fields"></span><table class="center" id="table-3">
+<span id="name-agtp-response-header-fields"></span><table class="center" id="table-3">
             <caption>
 <a href="#table-3" class="selfRef">Table 3</a>:
-<a href="#name-atp-response-header-fields" class="selfRef">ATP Response Header Fields</a>
+<a href="#name-agtp-response-header-fields" class="selfRef">AGTP Response Header Fields</a>
             </caption>
 <thead>
               <tr>
@@ -2295,14 +2299,14 @@ individual request.<a href="#section-5.3-2" class="pilcrow">¶</a></p>
             </thead>
             <tbody>
               <tr>
-                <td class="text-left" rowspan="1" colspan="1">ATP-Version</td>
+                <td class="text-left" rowspan="1" colspan="1">AGTP-Version</td>
                 <td class="text-left" rowspan="1" colspan="1">
                   <strong>MUST</strong>
 </td>
                 <td class="text-left" rowspan="1" colspan="1">Protocol version</td>
               </tr>
               <tr>
-                <td class="text-left" rowspan="1" colspan="1">ATP-Status</td>
+                <td class="text-left" rowspan="1" colspan="1">AGTP-Status</td>
                 <td class="text-left" rowspan="1" colspan="1">
                   <strong>MUST</strong>
 </td>
@@ -2340,7 +2344,7 @@ individual request.<a href="#section-5.3-2" class="pilcrow">¶</a></p>
                 <td class="text-left" rowspan="1" colspan="1">Supported-Methods</td>
                 <td class="text-left" rowspan="1" colspan="1">
                   <strong>SHOULD</strong> (on session open)</td>
-                <td class="text-left" rowspan="1" colspan="1">List of ATP methods supported by this server</td>
+                <td class="text-left" rowspan="1" colspan="1">List of AGTP methods supported by this server</td>
               </tr>
             </tbody>
           </table>
@@ -2353,13 +2357,13 @@ individual request.<a href="#section-5.3-2" class="pilcrow">¶</a></p>
         <h3 id="name-status-codes">
 <a href="#section-5.5" class="section-number selfRef">5.5. </a><a href="#name-status-codes" class="section-name selfRef">Status Codes</a>
         </h3>
-<p id="section-5.5-1">ATP defines its own status code space. Codes 451, 550, and 551 are
-ATP-specific with no HTTP equivalent and are registered in the IANA ATP
+<p id="section-5.5-1">AGTP defines its own status code space. Codes 451, 550, and 551 are
+AGTP-specific with no HTTP equivalent and are registered in the IANA AGTP
 Status Code Registry (see Section 8.3).<a href="#section-5.5-1" class="pilcrow">¶</a></p>
-<span id="name-atp-status-codes"></span><table class="center" id="table-4">
+<span id="name-agtp-status-codes"></span><table class="center" id="table-4">
           <caption>
 <a href="#table-4" class="selfRef">Table 4</a>:
-<a href="#name-atp-status-codes" class="selfRef">ATP Status Codes</a>
+<a href="#name-agtp-status-codes" class="selfRef">AGTP Status Codes</a>
           </caption>
 <thead>
             <tr>
@@ -2387,7 +2391,7 @@ Status Code Registry (see Section 8.3).<a href="#section-5.5-1" class="pilcrow">
             <tr>
               <td class="text-left" rowspan="1" colspan="1">400</td>
               <td class="text-left" rowspan="1" colspan="1">Bad Request</td>
-              <td class="text-left" rowspan="1" colspan="1">Malformed ATP request</td>
+              <td class="text-left" rowspan="1" colspan="1">Malformed AGTP request</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">401</td>
@@ -2427,7 +2431,7 @@ Status Code Registry (see Section 8.3).<a href="#section-5.5-1" class="pilcrow">
             <tr>
               <td class="text-left" rowspan="1" colspan="1">451</td>
               <td class="text-left" rowspan="1" colspan="1">Scope Violation</td>
-              <td class="text-left" rowspan="1" colspan="1">Requested action is outside declared Authority-Scope — ATP-specific</td>
+              <td class="text-left" rowspan="1" colspan="1">Requested action is outside declared Authority-Scope. AGTP-specific</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">500</td>
@@ -2442,12 +2446,12 @@ Status Code Registry (see Section 8.3).<a href="#section-5.5-1" class="pilcrow">
             <tr>
               <td class="text-left" rowspan="1" colspan="1">550</td>
               <td class="text-left" rowspan="1" colspan="1">Delegation Failure</td>
-              <td class="text-left" rowspan="1" colspan="1">A delegated sub-agent failed to complete the requested action — ATP-specific</td>
+              <td class="text-left" rowspan="1" colspan="1">A delegated sub-agent failed to complete the requested action. AGTP-specific</td>
             </tr>
             <tr>
               <td class="text-left" rowspan="1" colspan="1">551</td>
               <td class="text-left" rowspan="1" colspan="1">Authority Chain Broken</td>
-              <td class="text-left" rowspan="1" colspan="1">Delegation chain contains an unverifiable or broken identity link — ATP-specific</td>
+              <td class="text-left" rowspan="1" colspan="1">Delegation chain contains an unverifiable or broken identity link. AGTP-specific</td>
             </tr>
           </tbody>
         </table>
@@ -2464,19 +2468,19 @@ signals, not protocol errors, and <strong>MUST</strong> be logged for audit purp
         <h3 id="name-wire-format-and-content-typ">
 <a href="#section-5.6" class="section-number selfRef">5.6. </a><a href="#name-wire-format-and-content-typ" class="section-name selfRef">Wire Format and Content-Type</a>
         </h3>
-<p id="section-5.6-1">ATP request and response bodies are encoded as JSON. The registered
-Content-Type for ATP message bodies is:<a href="#section-5.6-1" class="pilcrow">¶</a></p>
+<p id="section-5.6-1">AGTP request and response bodies are encoded as JSON. The registered
+Content-Type for AGTP message bodies is:<a href="#section-5.6-1" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-5.6-2">
 <pre>
-Content-Type: application/atp+json
+Content-Type: application/agtp+json
 </pre><a href="#section-5.6-2" class="pilcrow">¶</a>
 </div>
-<p id="section-5.6-3">Implementations <strong>MUST</strong> include this Content-Type on all ATP requests and
+<p id="section-5.6-3">Implementations <strong>MUST</strong> include this Content-Type on all AGTP requests and
 responses that carry a message body. Responses with no body (e.g., 204 No
 Content) <strong>MUST NOT</strong> include a Content-Type header. Binary or streaming
 extensions <strong>MAY</strong> define additional Content-Type values as part of their
 companion specifications.<a href="#section-5.6-3" class="pilcrow">¶</a></p>
-<p id="section-5.6-4">The common structure for all ATP request bodies:<a href="#section-5.6-4" class="pilcrow">¶</a></p>
+<p id="section-5.6-4">The common structure for all AGTP request bodies:<a href="#section-5.6-4" class="pilcrow">¶</a></p>
 <div class="lang-json sourcecode" id="section-5.6-5">
 <pre>
 {
@@ -2488,7 +2492,7 @@ companion specifications.<a href="#section-5.6-3" class="pilcrow">¶</a></p>
 }
 </pre><a href="#section-5.6-5" class="pilcrow">¶</a>
 </div>
-<p id="section-5.6-6">And for all ATP response bodies:<a href="#section-5.6-6" class="pilcrow">¶</a></p>
+<p id="section-5.6-6">And for all AGTP response bodies:<a href="#section-5.6-6" class="pilcrow">¶</a></p>
 <div class="lang-json sourcecode" id="section-5.6-7">
 <pre>
 {
@@ -2506,13 +2510,13 @@ companion specifications.<a href="#section-5.6-3" class="pilcrow">¶</a></p>
         <h3 id="name-early-implementations">
 <a href="#section-5.7" class="section-number selfRef">5.7. </a><a href="#name-early-implementations" class="section-name selfRef">Early Implementations</a>
         </h3>
-<p id="section-5.7-1">ATP is a proposed specification. No production implementations exist at
+<p id="section-5.7-1">AGTP is a proposed specification. No production implementations exist at
 the time of this writing. The author encourages early prototype
 implementations to validate the protocol design, identify gaps, and
 generate feedback prior to IETF working group submission.<a href="#section-5.7-1" class="pilcrow">¶</a></p>
 <ul class="normal ulEmpty">
 <li class="normal ulEmpty" id="section-5.7-2.1">
-            <p id="section-5.7-2.1.1">If you are building an ATP prototype or reference implementation,
+            <p id="section-5.7-2.1.1">If you are building an AGTP prototype or reference implementation,
 please share your findings via the feedback channel listed on the cover
 of this document. A reference implementation in Python and/or Go is
 planned as open-source software concurrent with or shortly after IETF
@@ -2521,11 +2525,11 @@ incorporated into subsequent draft revisions.<a href="#section-5.7-2.1.1" class=
 </li>
         </ul>
 <p id="section-5.7-3">Implementers wishing to experiment before the formal IANA port assignment
-may use port 8443 (ATP/QUIC) and port 8080 (ATP/TCP+TLS) as working
+may use port 8443 (AGTP/QUIC) and port 8080 (AGTP/TCP+TLS) as working
 values. These values are subject to change upon final IANA assignment.<a href="#section-5.7-3" class="pilcrow">¶</a></p>
 <p id="section-5.7-4">The ACTIVATE method extension, which binds .nomo governed agent packages
-to ATP as a first-class activation operation, is described in a companion
-document and is implemented as an optional extension. Core ATP
+to AGTP as a first-class activation operation, is described in a companion
+document and is implemented as an optional extension. Core AGTP
 implementations need not support ACTIVATE to be compliant with this
 specification.<a href="#section-5.7-4" class="pilcrow">¶</a></p>
 </section>
@@ -2540,27 +2544,27 @@ specification.<a href="#section-5.7-4" class="pilcrow">¶</a></p>
           <h4 id="name-the-canonical-agent-identif">
 <a href="#section-5.8.1" class="section-number selfRef">5.8.1. </a><a href="#name-the-canonical-agent-identif" class="section-name selfRef">The Canonical Agent Identifier</a>
           </h4>
-<p id="section-5.8.1-1">Every ATP agent is identified by a canonical Agent-ID: a 256-bit
+<p id="section-5.8.1-1">Every AGTP agent is identified by a canonical Agent-ID: a 256-bit
 cryptographic identifier derived from the agent's governance-layer Birth
 Certificate at activation time. This identifier is globally unique,
-fixed-length, and — when the Agent Certificate extension is deployed —
+fixed-length, and, when the Agent Certificate extension is deployed,
 cryptographically verifiable at the transport layer.<a href="#section-5.8.1-1" class="pilcrow">¶</a></p>
-<p id="section-5.8.1-2">The URI form of a canonical Agent-ID uses the atp:// scheme:<a href="#section-5.8.1-2" class="pilcrow">¶</a></p>
+<p id="section-5.8.1-2">The URI form of a canonical Agent-ID uses the agtp:// scheme:<a href="#section-5.8.1-2" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-5.8.1-3">
 <pre>
-atp://3a9f2c1d8b7e4a6f0c2d5e9b1a3f7c0d4e8b2a5f9c3d7e1b0a4f8c2d6e0b
+agtp://3a9f2c1d8b7e4a6f0c2d5e9b1a3f7c0d4e8b2a5f9c3d7e1b0a4f8c2d6e0b
 </pre><a href="#section-5.8.1-3" class="pilcrow">¶</a>
 </div>
-<p id="section-5.8.1-4">URI length is not a practical constraint for atp:// identifiers.
+<p id="section-5.8.1-4">URI length is not a practical constraint for agtp:// identifiers.
 256-character URIs are handled without issue by all modern protocol stacks
 and do not require abbreviation or truncation.<a href="#section-5.8.1-4" class="pilcrow">¶</a></p>
-<p id="section-5.8.1-5">The atp:// URI scheme is proposed for IANA registration per <span>[<a href="#RFC7595" class="cite xref">RFC7595</a>]</span>
+<p id="section-5.8.1-5">The agtp:// URI scheme is proposed for IANA registration per <span>[<a href="#RFC7595" class="cite xref">RFC7595</a>]</span>
 as an open, unencumbered scheme. This registration is distinct from and
-independent of any intellectual property claims on ATP extensions.<a href="#section-5.8.1-5" class="pilcrow">¶</a></p>
-<p id="section-5.8.1-6">The canonical Agent-ID is the authoritative identifier in all ATP protocol
+independent of any intellectual property claims on AGTP extensions.<a href="#section-5.8.1-5" class="pilcrow">¶</a></p>
+<p id="section-5.8.1-6">The canonical Agent-ID is the authoritative identifier in all AGTP protocol
 operations: it appears in the Agent-ID header of every request, is the key
 in the certificate registry, and is the cross-layer reference linking the
-ATP Agent Certificate to the governance-layer Birth Certificate. All other
+AGTP Agent Certificate to the governance-layer Birth Certificate. All other
 identification forms described in this section are aliases that resolve to
 a canonical Agent-ID.<a href="#section-5.8.1-6" class="pilcrow">¶</a></p>
 </section>
@@ -2570,19 +2574,19 @@ a canonical Agent-ID.<a href="#section-5.8.1-6" class="pilcrow">¶</a></p>
           <h4 id="name-human-friendly-agent-names-">
 <a href="#section-5.8.2" class="section-number selfRef">5.8.2. </a><a href="#name-human-friendly-agent-names-" class="section-name selfRef">Human-Friendly Agent Names (Optional Layer)</a>
           </h4>
-<p id="section-5.8.2-1">For deployments with large numbers of agents — particularly enterprise
-environments with hundreds or thousands of agents per organization — the
+<p id="section-5.8.2-1">For deployments with large numbers of agents, particularly enterprise
+environments with hundreds or thousands of agents per organization, the
 canonical Agent-ID alone is insufficient for human-readable observability,
-audit navigation, and operational management. ATP supports an optional
+audit navigation, and operational management. AGTP supports an optional
 hierarchical naming layer as a convenience alias system on top of canonical
 identifiers.<a href="#section-5.8.2-1" class="pilcrow">¶</a></p>
 <p id="section-5.8.2-2">Human-friendly names follow a structured DNS-style format using the
 .agent or .nomo top-level labels:<a href="#section-5.8.2-2" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-5.8.2-3">
 <pre>
-atp://marketing-01.acme.agent
-atp://sales-bot-v2.engineering.acme.agent
-atp://customer-experience.acme.nomo
+agtp://marketing-01.acme.agent
+agtp://sales-bot-v2.engineering.acme.agent
+agtp://customer-experience.acme.nomo
 </pre><a href="#section-5.8.2-3" class="pilcrow">¶</a>
 </div>
 <p id="section-5.8.2-4">The structure is: [agent-label].[department].[organization].[tld]<a href="#section-5.8.2-4" class="pilcrow">¶</a></p>
@@ -2594,7 +2598,7 @@ at registration time (see Section 5.8.3).<a href="#section-5.8.2-5" class="pilcr
 The wildcard form acme.agent:sales-* matches all agents whose friendly
 name begins with sales- within the acme.agent namespace.<a href="#section-5.8.2-6" class="pilcrow">¶</a></p>
 <p id="section-5.8.2-7">Human-friendly names <strong>MUST NOT</strong> be used as Agent-ID header values in
-ATP protocol messages. The Agent-ID header always carries the canonical
+AGTP protocol messages. The Agent-ID header always carries the canonical
 256-bit identifier. Friendly names are a resolution and management layer;
 they are not transport-layer identifiers.<a href="#section-5.8.2-7" class="pilcrow">¶</a></p>
 </section>
@@ -2605,7 +2609,7 @@ they are not transport-layer identifiers.<a href="#section-5.8.2-7" class="pilcr
 <a href="#section-5.8.3" class="section-number selfRef">5.8.3. </a><a href="#name-governed-name-registration" class="section-name selfRef">Governed Name Registration</a>
           </h4>
 <p id="section-5.8.3-1">Human-friendly name registration is tied to the governed activation flow
-and ATP Agent Certificate issuance process. An agent may only claim a
+and AGTP Agent Certificate issuance process. An agent may only claim a
 friendly name after successfully completing the atomic activation protocol
 and receiving an Active lifecycle state in the certificate registry.<a href="#section-5.8.3-1" class="pilcrow">¶</a></p>
 <p id="section-5.8.3-2">The registration process:<a href="#section-5.8.3-2" class="pilcrow">¶</a></p>
@@ -2653,17 +2657,17 @@ its governance zone domain:<a href="#section-5.8.4-2.2.1" class="pilcrow">¶</a>
 </dl>
 <div class="alignLeft art-text artwork" id="section-5.8.4-3">
 <pre>
-_agent.acme.agent. IN TXT "atp-id=3a9f2c1d8b7e4a6f..."
+_agent.acme.agent. IN TXT "agtp-id=3a9f2c1d8b7e4a6f..."
 </pre><a href="#section-5.8.4-3" class="pilcrow">¶</a>
 </div>
 <span class="break"></span><dl class="dlParallel" id="section-5.8.4-4">
-            <dt id="section-5.8.4-4.1">ATP-native resolution:</dt>
+            <dt id="section-5.8.4-4.1">AGTP-native resolution:</dt>
             <dd style="margin-left: 1.5em" id="section-5.8.4-4.2">
-              <p id="section-5.8.4-4.2.1">An ATP QUERY request to the governance platform's resolution endpoint
+              <p id="section-5.8.4-4.2.1">An AGTP QUERY request to the governance platform's resolution endpoint
 resolves a friendly name to a canonical Agent-ID along with the agent's
-current lifecycle state, governance zone, trust tier, and ATP Agent
+current lifecycle state, governance zone, trust tier, and AGTP Agent
 Certificate status. Resolution responses carry Content-Type:
-application/atp+json:<a href="#section-5.8.4-4.2.1" class="pilcrow">¶</a></p>
+application/agtp+json:<a href="#section-5.8.4-4.2.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 </dl>
@@ -2681,7 +2685,7 @@ application/atp+json:<a href="#section-5.8.4-4.2.1" class="pilcrow">¶</a></p>
 </pre><a href="#section-5.8.4-5" class="pilcrow">¶</a>
 </div>
 <p id="section-5.8.4-6">Implementations <strong>MUST</strong> treat the canonical Agent-ID as authoritative
-in the event of a conflict between DNS-based and ATP-native resolution
+in the event of a conflict between DNS-based and AGTP-native resolution
 results.<a href="#section-5.8.4-6" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -2699,17 +2703,17 @@ name registry is a lightweight key-value store indexed on
 adding O(1) per-resolution overhead.<a href="#section-5.8.5-1" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="iana-considerations-for-the-atp-uri-scheme">
+<div id="iana-considerations-for-the-agtp-uri-scheme">
 <section id="section-5.8.6">
           <h4 id="name-iana-considerations-for-the">
-<a href="#section-5.8.6" class="section-number selfRef">5.8.6. </a><a href="#name-iana-considerations-for-the" class="section-name selfRef">IANA Considerations for the atp:// URI Scheme</a>
+<a href="#section-5.8.6" class="section-number selfRef">5.8.6. </a><a href="#name-iana-considerations-for-the" class="section-name selfRef">IANA Considerations for the agtp:// URI Scheme</a>
           </h4>
-<p id="section-5.8.6-1">This document proposes registration of the atp:// URI scheme with IANA
+<p id="section-5.8.6-1">This document proposes registration of the agtp:// URI scheme with IANA
 per <span>[<a href="#RFC7595" class="cite xref">RFC7595</a>]</span>. Registration template:<a href="#section-5.8.6-1" class="pilcrow">¶</a></p>
 <span class="break"></span><dl class="dlParallel" id="section-5.8.6-2">
             <dt id="section-5.8.6-2.1">URI scheme name:</dt>
             <dd style="margin-left: 1.5em" id="section-5.8.6-2.2">
-              <p id="section-5.8.6-2.2.1">atp<a href="#section-5.8.6-2.2.1" class="pilcrow">¶</a></p>
+              <p id="section-5.8.6-2.2.1">agtp<a href="#section-5.8.6-2.2.1" class="pilcrow">¶</a></p>
 </dd>
             <dd class="break"></dd>
 <dt id="section-5.8.6-2.3">Status:</dt>
@@ -2719,7 +2723,7 @@ per <span>[<a href="#RFC7595" class="cite xref">RFC7595</a>]</span>. Registratio
             <dd class="break"></dd>
 <dt id="section-5.8.6-2.5">URI scheme syntax:</dt>
             <dd style="margin-left: 1.5em" id="section-5.8.6-2.6">
-              <p id="section-5.8.6-2.6.1">atp://[canonical-agent-id] or atp://[friendly-name]<a href="#section-5.8.6-2.6.1" class="pilcrow">¶</a></p>
+              <p id="section-5.8.6-2.6.1">agtp://[canonical-agent-id] or agtp://[friendly-name]<a href="#section-5.8.6-2.6.1" class="pilcrow">¶</a></p>
 </dd>
             <dd class="break"></dd>
 <dt id="section-5.8.6-2.7">URI scheme semantics:</dt>
@@ -2727,7 +2731,7 @@ per <span>[<a href="#RFC7595" class="cite xref">RFC7595</a>]</span>. Registratio
               <p id="section-5.8.6-2.8.1">Identifies an AI agent operating over the Agent Transfer Protocol.
 The canonical form uses a 256-bit hex-encoded cryptographic identifier.
 The friendly-name form uses a hierarchical DNS-style label resolvable
-to a canonical identifier via DNS TXT records or ATP-native lookup.<a href="#section-5.8.6-2.8.1" class="pilcrow">¶</a></p>
+to a canonical identifier via DNS TXT records or AGTP-native lookup.<a href="#section-5.8.6-2.8.1" class="pilcrow">¶</a></p>
 </dd>
             <dd class="break"></dd>
 <dt id="section-5.8.6-2.9">Applications/protocols that use this URI scheme:</dt>
@@ -2752,7 +2756,7 @@ canonical identifiers and <strong>SHOULD</strong> support friendly-name resoluti
 </dd>
           <dd class="break"></dd>
 </dl>
-<p id="section-5.8.6-3">The atp:// URI scheme registration is open and unencumbered. No
+<p id="section-5.8.6-3">The agtp:// URI scheme registration is open and unencumbered. No
 intellectual property claims apply to the URI scheme itself.<a href="#section-5.8.6-3" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -2770,7 +2774,7 @@ intellectual property claims apply to the URI scheme itself.<a href="#section-5.
         <h3 id="name-design-philosophy">
 <a href="#section-6.1" class="section-number selfRef">6.1. </a><a href="#name-design-philosophy" class="section-name selfRef">Design Philosophy</a>
         </h3>
-<p id="section-6.1-1">ATP methods are intent verbs, not resource operations. Each method
+<p id="section-6.1-1">AGTP methods are intent verbs, not resource operations. Each method
 expresses what an agent is trying to accomplish. Method names are
 uppercase ASCII strings. Methods that modify state are NOT idempotent
 by default unless explicitly marked. All methods accept a context
@@ -3003,7 +3007,7 @@ a durable plan, not an immediate execution.<a href="#section-6.2.4-1" class="pil
                 <td class="text-left" rowspan="1" colspan="1">
                   <strong>MUST</strong>
 </td>
-                <td class="text-left" rowspan="1" colspan="1">Ordered list of ATP method calls with parameters</td>
+                <td class="text-left" rowspan="1" colspan="1">Ordered list of AGTP method calls with parameters</td>
               </tr>
               <tr>
                 <td class="text-left" rowspan="1" colspan="1">trigger</td>
@@ -3044,7 +3048,7 @@ execution timestamp. Idempotent: No.<a href="#section-6.2.4-3" class="pilcrow">�
 <a href="#section-6.2.5" class="section-number selfRef">6.2.5. </a><a href="#name-learn" class="section-name selfRef">LEARN</a>
           </h4>
 <p id="section-6.2.5-1">Purpose: Update the agent's session context, knowledge state, or persistent
-memory. An explicit context write — the agent asserts that something should
+memory. An explicit context write where the agent asserts that something should
 be retained.<a href="#section-6.2.5-1" class="pilcrow">¶</a></p>
 <span id="name-learn-parameters"></span><table class="center" id="table-9">
             <caption>
@@ -3112,7 +3116,7 @@ be retained.<a href="#section-6.2.5-1" class="pilcrow">¶</a></p>
 <a href="#section-6.2.6" class="section-number selfRef">6.2.6. </a><a href="#name-delegate" class="section-name selfRef">DELEGATE</a>
           </h4>
 <p id="section-6.2.6-1">Purpose: Transfer execution of a task or method to a sub-agent or
-downstream system. Initiates a new ATP session on behalf of the delegating
+downstream system. Initiates a new AGTP session on behalf of the delegating
 agent, carrying forward authority lineage.<a href="#section-6.2.6-1" class="pilcrow">¶</a></p>
 <span id="name-delegate-parameters"></span><table class="center" id="table-10">
             <caption>
@@ -3139,14 +3143,14 @@ agent, carrying forward authority lineage.<a href="#section-6.2.6-1" class="pilc
                 <td class="text-left" rowspan="1" colspan="1">
                   <strong>MUST</strong>
 </td>
-                <td class="text-left" rowspan="1" colspan="1">ATP method call (or sequence) to execute</td>
+                <td class="text-left" rowspan="1" colspan="1">AGTP method call (or sequence) to execute</td>
               </tr>
               <tr>
                 <td class="text-left" rowspan="1" colspan="1">authority_scope</td>
                 <td class="text-left" rowspan="1" colspan="1">
                   <strong>MUST</strong>
 </td>
-                <td class="text-left" rowspan="1" colspan="1">Scope granted to sub-agent — <strong>MUST</strong> be a strict subset of delegating agent's scope</td>
+                <td class="text-left" rowspan="1" colspan="1">Scope granted to sub-agent <strong>MUST</strong> be a strict subset of delegating agent's scope</td>
               </tr>
               <tr>
                 <td class="text-left" rowspan="1" colspan="1">delegation_token</td>
@@ -3160,7 +3164,7 @@ agent, carrying forward authority lineage.<a href="#section-6.2.6-1" class="pilc
                 <td class="text-left" rowspan="1" colspan="1">
                   <strong>SHOULD</strong>
 </td>
-                <td class="text-left" rowspan="1" colspan="1">ATP endpoint for result delivery</td>
+                <td class="text-left" rowspan="1" colspan="1">AGTP endpoint for result delivery</td>
               </tr>
               <tr>
                 <td class="text-left" rowspan="1" colspan="1">deadline</td>
@@ -3236,7 +3240,7 @@ work in parallel or in defined roles toward a shared goal. Unlike DELEGATE
             </tbody>
           </table>
 <p id="section-6.2.7-3">Response: Collaboration session receipt with collaboration_id. Each
-collaborator receives an ATP NOTIFY to join. Idempotent: No.<a href="#section-6.2.7-3" class="pilcrow">¶</a></p>
+collaborator receives an AGTP NOTIFY to join. Idempotent: No.<a href="#section-6.2.7-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="confirm">
@@ -3300,7 +3304,7 @@ Idempotent: Yes.<a href="#section-6.2.8-3" class="pilcrow">¶</a></p>
 <p id="section-6.2.9-1">Purpose: Route a task, decision, or exception to a human principal or
 higher-authority agent when the current agent cannot or should not proceed.
 ESCALATE is the protocol-level expression of meaningful friction in AI
-systems — a first-class method, not a failure code.<a href="#section-6.2.9-1" class="pilcrow">¶</a></p>
+systems as a first-class method.<a href="#section-6.2.9-1" class="pilcrow">¶</a></p>
 <span id="name-escalate-parameters"></span><table class="center" id="table-13">
             <caption>
 <a href="#table-13" class="selfRef">Table 13</a>:
@@ -3361,7 +3365,7 @@ systems — a first-class method, not a failure code.<a href="#section-6.2.9-1" 
 <p id="section-6.2.9-3">Response: Escalation receipt with escalation_id and routing confirmation.
 The escalated task is paused until resolved via CONFIRM. Idempotent: Yes.
 An agent that escalates appropriately is functioning correctly. Governance
-frameworks built on ATP can use escalation frequency and reason codes as
+frameworks built on AGTP can use escalation frequency and reason codes as
 observability signals for systemic issues.<a href="#section-6.2.9-3" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -3433,10 +3437,10 @@ required) returned via a subsequent CONFIRM from the recipient.<a href="#section
         <h3 id="name-method-summary-table">
 <a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-method-summary-table" class="section-name selfRef">Method Summary Table</a>
         </h3>
-<span id="name-atp-core-method-summary"></span><table class="center" id="table-15">
+<span id="name-agtp-core-method-summary"></span><table class="center" id="table-15">
           <caption>
 <a href="#table-15" class="selfRef">Table 15</a>:
-<a href="#name-atp-core-method-summary" class="selfRef">ATP Core Method Summary</a>
+<a href="#name-agtp-core-method-summary" class="selfRef">AGTP Core Method Summary</a>
           </caption>
 <thead>
             <tr>
@@ -3527,10 +3531,10 @@ required) returned via a subsequent CONFIRM from the recipient.<a href="#section
         <h3 id="name-method-registry-and-extensi">
 <a href="#section-6.4" class="section-number selfRef">6.4. </a><a href="#name-method-registry-and-extensi" class="section-name selfRef">Method Registry and Extensibility</a>
         </h3>
-<p id="section-6.4-1">ATP defines a formal Method Registry maintained by IANA (see Section 8.2).
+<p id="section-6.4-1">AGTP defines a formal Method Registry maintained by IANA (see Section 8.2).
 Any party may submit a new method for registration. The registration
 procedure is Expert Review, and registration <strong>MUST</strong> be accompanied by a
-published specification — at minimum an IETF Internet-Draft or equivalent
+published specification, at minimum an IETF Internet-Draft or equivalent
 publicly available document. Registered methods <strong>MUST</strong>:<a href="#section-6.4-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-6.4-2">
 <li id="section-6.4-2.1">
@@ -3573,26 +3577,26 @@ Clients <strong>SHOULD</strong> check this list before invoking non-core methods
           <h4 id="name-three-tier-method-architect">
 <a href="#section-6.5.1" class="section-number selfRef">6.5.1. </a><a href="#name-three-tier-method-architect" class="section-name selfRef">Three-Tier Method Architecture</a>
           </h4>
-<p id="section-6.5.1-1">The ATP method vocabulary is organized into three tiers reflecting
+<p id="section-6.5.1-1">The AGTP method vocabulary is organized into three tiers reflecting
 different levels of universality, specificity, and domain relevance.<a href="#section-6.5.1-1" class="pilcrow">¶</a></p>
 <span class="break"></span><dl class="dlParallel" id="section-6.5.1-2">
-            <dt id="section-6.5.1-2.1">Tier 1 — Core Methods (defined in Section 6.2):</dt>
+            <dt id="section-6.5.1-2.1">Tier 1. Core Methods (defined in Section 6.2):</dt>
             <dd style="margin-left: 1.5em" id="section-6.5.1-2.2">
-              <p id="section-6.5.1-2.2.1">The baseline vocabulary required for ATP compliance. Every conformant
-ATP implementation <strong>MUST</strong> support all Tier 1 methods.<a href="#section-6.5.1-2.2.1" class="pilcrow">¶</a></p>
+              <p id="section-6.5.1-2.2.1">The baseline vocabulary required for AGTP compliance. Every conformant
+AGTP implementation <strong>MUST</strong> support all Tier 1 methods.<a href="#section-6.5.1-2.2.1" class="pilcrow">¶</a></p>
 </dd>
             <dd class="break"></dd>
-<dt id="section-6.5.1-2.3">Tier 2 — Standard Extended Methods:</dt>
+<dt id="section-6.5.1-2.3">Tier 2. Standard Extended Methods:</dt>
             <dd style="margin-left: 1.5em" id="section-6.5.1-2.4">
-              <p id="section-6.5.1-2.4.1">Registered in the IANA ATP Method Registry and available for use in any
-ATP implementation. Not required for baseline compliance but <strong>SHOULD</strong>
-be implemented where their semantics apply. Defined in <span>[<a href="#ATP-METHODS" class="cite xref">ATP-METHODS</a>]</span>.<a href="#section-6.5.1-2.4.1" class="pilcrow">¶</a></p>
+              <p id="section-6.5.1-2.4.1">Registered in the IANA AGTP Method Registry and available for use in any
+AGTP implementation. Not required for baseline compliance but <strong>SHOULD</strong>
+be implemented where their semantics apply. Defined in <span>[<a href="#AGTP-METHODS" class="cite xref">AGTP-METHODS</a>]</span>.<a href="#section-6.5.1-2.4.1" class="pilcrow">¶</a></p>
 </dd>
             <dd class="break"></dd>
-<dt id="section-6.5.1-2.5">Tier 3 — Industry Profile Methods:</dt>
+<dt id="section-6.5.1-2.5">Tier 3. Industry Profile Methods:</dt>
             <dd style="margin-left: 1.5em" id="section-6.5.1-2.6">
               <p id="section-6.5.1-2.6.1">Domain-specific method sets defined and registered by industry
-communities as named ATP profiles. Valid within deployments that declare
+communities as named AGTP profiles. Valid within deployments that declare
 support for the relevant profile. Not required in general-purpose
 implementations.<a href="#section-6.5.1-2.6.1" class="pilcrow">¶</a></p>
 </dd>
@@ -3605,7 +3609,7 @@ implementations.<a href="#section-6.5.1-2.6.1" class="pilcrow">¶</a></p>
           <h4 id="name-method-category-taxonomy">
 <a href="#section-6.5.2" class="section-number selfRef">6.5.2. </a><a href="#name-method-category-taxonomy" class="section-name selfRef">Method Category Taxonomy</a>
           </h4>
-<p id="section-6.5.2-1">All ATP methods are organized into five categories:<a href="#section-6.5.2-1" class="pilcrow">¶</a></p>
+<p id="section-6.5.2-1">All AGTP methods are organized into five categories:<a href="#section-6.5.2-1" class="pilcrow">¶</a></p>
 <span class="break"></span><dl class="dlParallel" id="section-6.5.2-2">
             <dt id="section-6.5.2-2.1">ACQUIRE:</dt>
             <dd style="margin-left: 1.5em" id="section-6.5.2-2.2">
@@ -3701,7 +3705,7 @@ May spawn sub-agents or sessions; delegation chain semantics apply.<a href="#sec
 <a href="#section-6.5.3" class="section-number selfRef">6.5.3. </a><a href="#name-standard-extended-methods-t" class="section-name selfRef">Standard Extended Methods (Tier 2)</a>
           </h4>
 <p id="section-6.5.3-1">The following methods constitute the initial Tier 2 registration set,
-defined in <span>[<a href="#ATP-METHODS" class="cite xref">ATP-METHODS</a>]</span>. Listed here by category with brief semantic
+defined in <span>[<a href="#AGTP-METHODS" class="cite xref">AGTP-METHODS</a>]</span>. Listed here by category with brief semantic
 definitions; full parameter specifications are in the companion document.<a href="#section-6.5.3-1" class="pilcrow">¶</a></p>
 <p id="section-6.5.3-2">ACQUIRE category: FETCH, SEARCH, SCAN, PULL, IMPORT, FIND.<a href="#section-6.5.3-2" class="pilcrow">¶</a></p>
 <p id="section-6.5.3-3">COMPUTE category: EXTRACT, FILTER, VALIDATE, TRANSFORM, TRANSLATE,
@@ -3721,8 +3725,8 @@ parameter; implementations <strong>MUST NOT</strong> accept free-form execution 
           <h4 id="name-short-form-and-industry-ins">
 <a href="#section-6.5.4" class="section-number selfRef">6.5.4. </a><a href="#name-short-form-and-industry-ins" class="section-name selfRef">Short-Form and Industry-Inspired Methods</a>
           </h4>
-<p id="section-6.5.4-1">A set of short-form verb methods — SET, TAKE, OPEN, START, CALL, MAKE,
-TURN, BREAK — are provisionally catalogued as candidates for Tier 2
+<p id="section-6.5.4-1">A set of short-form verb methods, e.g., SET, TAKE, OPEN, START, CALL, MAKE,
+TURN, BREAK, are provisionally catalogued as candidates for Tier 2
 registration. These verbs are highly context-dependent and their semantics
 vary significantly across deployment domains.<a href="#section-6.5.4-1" class="pilcrow">¶</a></p>
 <p id="section-6.5.4-2">Short-form methods will be registered individually only when a published
@@ -3737,15 +3741,15 @@ during the experimentation period.<a href="#section-6.5.4-2" class="pilcrow">¶<
           <h4 id="name-industry-profile-method-set">
 <a href="#section-6.5.5" class="section-number selfRef">6.5.5. </a><a href="#name-industry-profile-method-set" class="section-name selfRef">Industry Profile Method Sets</a>
           </h4>
-<p id="section-6.5.5-1">ATP recognizes that specific industries require method vocabularies
+<p id="section-6.5.5-1">AGTP recognizes that specific industries require method vocabularies
 reflecting domain-specific operations that would be inappropriate in a
 general-purpose standard. Industry profile method sets are defined and
-registered as named ATP profiles. A profile is a published companion
+registered as named AGTP profiles. A profile is a published companion
 specification that:<a href="#section-6.5.5-1" class="pilcrow">¶</a></p>
 <ol start="1" type="1" class="normal type-1" id="section-6.5.5-2">
 <li id="section-6.5.5-2.1">
-              <p id="section-6.5.5-2.1.1">Declares a profile name (e.g., atp-profile-healthcare,
-atp-profile-financial, atp-profile-legaltech)<a href="#section-6.5.5-2.1.1" class="pilcrow">¶</a></p>
+              <p id="section-6.5.5-2.1.1">Declares a profile name (e.g., agtp-profile-healthcare,
+agtp-profile-financial, agtp-profile-legaltech)<a href="#section-6.5.5-2.1.1" class="pilcrow">¶</a></p>
 </li>
             <li id="section-6.5.5-2.2">
               <p id="section-6.5.5-2.2.1">Defines one or more industry-specific methods with full parameter
@@ -3768,7 +3772,7 @@ registered; listed for directional purposes only):<a href="#section-6.5.5-3" cla
 PRESERVE<a href="#section-6.5.5-6" class="pilcrow">¶</a></p>
 <p id="section-6.5.5-7">Infrastructure: PROVISION, DEPROVISION, ROLLBACK, SNAPSHOT, FAILOVER<a href="#section-6.5.5-7" class="pilcrow">¶</a></p>
 <p id="section-6.5.5-8">Industry communities are encouraged to develop and submit profile
-specifications through the IETF process. The IANA ATP Method Registry will
+specifications through the IETF process. The IANA AGTP Method Registry will
 maintain a profile index alongside the core and standard method registries.<a href="#section-6.5.5-8" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -3788,7 +3792,7 @@ clarity, and security considerations.<a href="#section-6.5.6-1.2.1" class="pilcr
 <dt id="section-6.5.6-1.3">For Industry Profile Methods:</dt>
             <dd style="margin-left: 1.5em" id="section-6.5.6-1.4">
               <p id="section-6.5.6-1.4.1">Submit a profile specification to the IETF (or a recognized domain
-standards body with an established ATP registry liaison) covering all
+standards body with an established AGTP registry liaison) covering all
 methods in the profile and profile compliance requirements.<a href="#section-6.5.6-1.4.1" class="pilcrow">¶</a></p>
 </dd>
             <dd class="break"></dd>
@@ -3801,8 +3805,8 @@ unprefixed name.<a href="#section-6.5.6-1.6.1" class="pilcrow">¶</a></p>
 </dd>
           <dd class="break"></dd>
 </dl>
-<p id="section-6.5.6-2">The ATP Method Registry is published at:
-https://www.iana.org/assignments/atp-methods/<a href="#section-6.5.6-2" class="pilcrow">¶</a></p>
+<p id="section-6.5.6-2">The AGTP Method Registry is published at:
+https://www.iana.org/assignments/agtp-methods/<a href="#section-6.5.6-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -3815,14 +3819,14 @@ https://www.iana.org/assignments/atp-methods/<a href="#section-6.5.6-2" class="p
 <a href="#section-7" class="section-number selfRef">7. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
       </h2>
 <p id="section-7-1">This section satisfies the mandatory IETF Security Considerations
-requirement. All ATP implementations <strong>MUST</strong> address the considerations
+requirement. All AGTP implementations <strong>MUST</strong> address the considerations
 described here.<a href="#section-7-1" class="pilcrow">¶</a></p>
 <div id="mandatory-tls">
 <section id="section-7.1">
         <h3 id="name-mandatory-tls">
 <a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-mandatory-tls" class="section-name selfRef">Mandatory TLS</a>
         </h3>
-<p id="section-7.1-1">All ATP connections <strong>MUST</strong> use TLS 1.3 or higher. Implementations
+<p id="section-7.1-1">All AGTP connections <strong>MUST</strong> use TLS 1.3 or higher. Implementations
 <strong>MUST</strong> reject connections using TLS 1.2 or below. Certificate validation
 follows standard PKI practices per <span>[<a href="#RFC5280" class="cite xref">RFC5280</a>]</span>. Servers <strong>MUST</strong> present
 a valid certificate.<a href="#section-7.1-1" class="pilcrow">¶</a></p>
@@ -3833,13 +3837,13 @@ a valid certificate.<a href="#section-7.1-1" class="pilcrow">¶</a></p>
         <h3 id="name-agent-identity-headers-and-">
 <a href="#section-7.2" class="section-number selfRef">7.2. </a><a href="#name-agent-identity-headers-and-" class="section-name selfRef">Agent Identity Headers and Agent Certificate Extension</a>
         </h3>
-<p id="section-7.2-1">Every ATP request <strong>MUST</strong> include Agent-ID and Principal-ID header fields.
+<p id="section-7.2-1">Every AGTP request <strong>MUST</strong> include Agent-ID and Principal-ID header fields.
 In the base specification, these fields are not cryptographically
-authenticated — they are self-asserted but logged mandatorily for
+authenticated. They are self-asserted but logged mandatorily for
 auditability. Implementations <strong>SHOULD</strong> use logging and anomaly detection
 to identify inconsistencies.<a href="#section-7.2-1" class="pilcrow">¶</a></p>
 <p id="section-7.2-2">Full cryptographic verification of agent identity and Authority-Scope is
-provided by the ATP Agent Certificate extension <span>[<a href="#ATP-CERT" class="cite xref">ATP-CERT</a>]</span>. That
+provided by the AGTP Agent Certificate extension <span>[<a href="#AGTP-CERT" class="cite xref">AGTP-CERT</a>]</span>. That
 extension binds Agent-ID, Principal-ID, and Authority-Scope to an X.509
 v3 certificate presented during TLS mutual authentication, enabling
 infrastructure-layer identity and scope verification without
@@ -3854,7 +3858,7 @@ preceding the Abstract for details. The licensor is prepared to grant
 a royalty-free license to implementers.<a href="#section-7.2-3.1.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-7.2-4">Every ATP server <strong>MUST</strong> log Agent-ID and Principal-ID fields for every
+<p id="section-7.2-4">Every AGTP server <strong>MUST</strong> log Agent-ID and Principal-ID fields for every
 request, creating an attributable audit trail even in deployments without
 the Certificate extension.<a href="#section-7.2-4" class="pilcrow">¶</a></p>
 </section>
@@ -3865,12 +3869,12 @@ the Certificate extension.<a href="#section-7.2-4" class="pilcrow">¶</a></p>
 <a href="#section-7.3" class="section-number selfRef">7.3. </a><a href="#name-authority-scope-enforcement" class="section-name selfRef">Authority Scope Enforcement</a>
         </h3>
 <p id="section-7.3-1">The Authority-Scope header declares what actions the agent is authorized
-to take. Compliant ATP servers <strong>MUST</strong> parse the Authority-Scope on every
+to take. Compliant AGTP servers <strong>MUST</strong> parse the Authority-Scope on every
 request, return 451 Scope Violation for any method that exceeds declared
 scope, and log all scope violations for audit purposes. Scope declarations
 are self-asserted in the base spec, analogous to scope assertions in
 OAuth 2.0 <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>. Cryptographically signed and infrastructure-enforced
-scopes are defined in <span>[<a href="#ATP-CERT" class="cite xref">ATP-CERT</a>]</span>.<a href="#section-7.3-1" class="pilcrow">¶</a></p>
+scopes are defined in <span>[<a href="#AGTP-CERT" class="cite xref">AGTP-CERT</a>]</span>.<a href="#section-7.3-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="threat-model">
@@ -3885,7 +3889,7 @@ scopes are defined in <span>[<a href="#ATP-CERT" class="cite xref">ATP-CERT</a>]
           </h4>
 <p id="section-7.4.1-1">Threat: A malicious actor forges Agent-ID and Principal-ID headers to
 impersonate a trusted agent. Base spec mitigation: mandatory logging and
-anomaly detection. Full mitigation requires <span>[<a href="#ATP-CERT" class="cite xref">ATP-CERT</a>]</span>.<a href="#section-7.4.1-1" class="pilcrow">¶</a></p>
+anomaly detection. Full mitigation requires <span>[<a href="#AGTP-CERT" class="cite xref">AGTP-CERT</a>]</span>.<a href="#section-7.4.1-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="authority-laundering">
@@ -3907,7 +3911,7 @@ strict subset of the delegating agent's scope.<a href="#section-7.4.2-1" class="
 <p id="section-7.4.3-1">Threat: A malicious agent inserts itself into a DELEGATE chain. Mitigation:
 Delegation-Chain headers are logged at each hop. 551 Authority Chain Broken
 is returned if any chain entry is unverifiable. Full mitigation requires
-<span>[<a href="#ATP-CERT" class="cite xref">ATP-CERT</a>]</span> for signed delegation tokens.<a href="#section-7.4.3-1" class="pilcrow">¶</a></p>
+<span>[<a href="#AGTP-CERT" class="cite xref">AGTP-CERT</a>]</span> for signed delegation tokens.<a href="#section-7.4.3-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="denial-of-service-via-high-frequency-agent-traffic">
@@ -3915,10 +3919,10 @@ is returned if any chain entry is unverifiable. Full mitigation requires
           <h4 id="name-denial-of-service-via-high-">
 <a href="#section-7.4.4" class="section-number selfRef">7.4.4. </a><a href="#name-denial-of-service-via-high-" class="section-name selfRef">Denial of Service via High-Frequency Agent Traffic</a>
           </h4>
-<p id="section-7.4.4-1">Threat: Agents — compromised, misconfigured, or adversarial — generate
+<p id="section-7.4.4-1">Threat: Agents that are compromised, misconfigured, or adversarial, generate
 extremely high request volumes. Mitigation: 429 Rate Limited status code.
 Rate limiting <strong>SHOULD</strong> be applied per Agent-ID and per Principal-ID.
-When <span>[<a href="#ATP-CERT" class="cite xref">ATP-CERT</a>]</span> is deployed, per-Agent-ID quotas can be cryptographically
+When <span>[<a href="#AGTP-CERT" class="cite xref">AGTP-CERT</a>]</span> is deployed, per-Agent-ID quotas can be cryptographically
 tied to verified identity, preventing quota evasion through Agent-ID
 spoofing.<a href="#section-7.4.4-1" class="pilcrow">¶</a></p>
 </section>
@@ -3967,15 +3971,15 @@ sensitive:<a href="#section-7.5-1" class="pilcrow">¶</a></p>
             <p id="section-7.5-2.3.1">Delegation-Chain reveals multi-agent architecture<a href="#section-7.5-2.3.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
-<p id="section-7.5-3">ATP logs containing these fields <strong>MUST</strong> be treated as sensitive
+<p id="section-7.5-3">AGTP logs containing these fields <strong>MUST</strong> be treated as sensitive
 operational data. Operators <strong>MUST</strong> implement appropriate access controls,
 retention limits, and data minimization practices consistent with
 applicable privacy regulations.<a href="#section-7.5-3" class="pilcrow">¶</a></p>
 <p id="section-7.5-4">Where privacy-preserving attribution is required, implementations <strong>MAY</strong>
 use pseudonymous Agent-IDs with a separate trusted resolution service.
-Under this model, the Agent-ID transmitted in ATP headers is an opaque,
-unlinkable identifier; a trusted resolution service — accessible only to
-authorized parties — maps the opaque identifier to the true agent identity
+Under this model, the Agent-ID transmitted in AGTP headers is an opaque,
+unlinkable identifier; a trusted resolution service, accessible only to
+authorized parties, maps the opaque identifier to the true agent identity
 for audit and accountability purposes. The architecture for pseudonymous
 agent identity resolution is reserved for a future companion document.<a href="#section-7.5-4" class="pilcrow">¶</a></p>
 </section>
@@ -3985,14 +3989,14 @@ agent identity resolution is reserved for a future companion document.<a href="#
         <h3 id="name-denial-of-service-considera">
 <a href="#section-7.6" class="section-number selfRef">7.6. </a><a href="#name-denial-of-service-considera" class="section-name selfRef">Denial-of-Service Considerations</a>
         </h3>
-<p id="section-7.6-1">ATP's agent identity headers provide a mechanism for more precise
+<p id="section-7.6-1">AGTP's agent identity headers provide a mechanism for more precise
 denial-of-service mitigation than is possible with HTTP. Rate limiting
 <strong>SHOULD</strong> be applied per Agent-ID and per Principal-ID in addition to
 per-IP-address controls.<a href="#section-7.6-1" class="pilcrow">¶</a></p>
-<p id="section-7.6-2">When <span>[<a href="#ATP-CERT" class="cite xref">ATP-CERT</a>]</span> is deployed, per-Agent-ID rate limiting can be
+<p id="section-7.6-2">When <span>[<a href="#AGTP-CERT" class="cite xref">AGTP-CERT</a>]</span> is deployed, per-Agent-ID rate limiting can be
 cryptographically tied to verified agent identity, preventing quota evasion
 through Agent-ID rotation. Implementations planning high-volume governed
-agent deployments <strong>SHOULD</strong> plan for <span>[<a href="#ATP-CERT" class="cite xref">ATP-CERT</a>]</span> as part of their
+agent deployments <strong>SHOULD</strong> plan for <span>[<a href="#AGTP-CERT" class="cite xref">AGTP-CERT</a>]</span> as part of their
 denial-of-service mitigation strategy.<a href="#section-7.6-2" class="pilcrow">¶</a></p>
 <p id="section-7.6-3">Additional recommended mitigations: Priority header enforcement (Priority:
 background requests <strong>SHOULD</strong> have lower rate limit headroom than
@@ -4005,15 +4009,15 @@ deployments; and circuit breaker patterns for ESCALATE request floods.<a href="#
         <h3 id="name-intellectual-property-consi">
 <a href="#section-7.7" class="section-number selfRef">7.7. </a><a href="#name-intellectual-property-consi" class="section-name selfRef">Intellectual Property Considerations</a>
         </h3>
-<p id="section-7.7-1">The core ATP specification — including all base methods, header fields,
+<p id="section-7.7-1">The core AGTP specification, including all base methods, header fields,
 status codes, connection model, and IANA registrations defined in this
-document — is intended for open implementation without royalty obligation.<a href="#section-7.7-1" class="pilcrow">¶</a></p>
+document, is intended for open implementation without royalty obligation.<a href="#section-7.7-1" class="pilcrow">¶</a></p>
 <p id="section-7.7-2">Certain extensions referenced in this document may be subject to pending
 patent applications by the author, specifically: the Agent Certificate
-extension <span>[<a href="#ATP-CERT" class="cite xref">ATP-CERT</a>]</span>, which provides cryptographic binding of agent
-identity and authority scope to ATP header fields; and the ACTIVATE method,
-which provides ATP-native transmission and activation of governed agent
-packages. Implementers of the core ATP specification are not affected by
+extension <span>[<a href="#AGTP-CERT" class="cite xref">AGTP-CERT</a>]</span>, which provides cryptographic binding of agent
+identity and authority scope to AGTP header fields; and the ACTIVATE method,
+which provides AGTP-native transmission and activation of governed agent
+packages. Implementers of the core AGTP specification are not affected by
 any intellectual property claims on these extensions.<a href="#section-7.7-2" class="pilcrow">¶</a></p>
 <p id="section-7.7-3">The licensor is prepared to grant a royalty-free license to implementers
 for any patent claims that cover contributions in this document and its
@@ -4054,13 +4058,13 @@ Transport Protocol Port Number Registry:<a href="#section-8.1-1" class="pilcrow"
           </thead>
           <tbody>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">atp</td>
+              <td class="text-left" rowspan="1" colspan="1">agtp</td>
               <td class="text-left" rowspan="1" colspan="1">TBD</td>
               <td class="text-left" rowspan="1" colspan="1">TCP</td>
               <td class="text-left" rowspan="1" colspan="1">Agent Transfer Protocol over TCP/TLS</td>
             </tr>
             <tr>
-              <td class="text-left" rowspan="1" colspan="1">atp-quic</td>
+              <td class="text-left" rowspan="1" colspan="1">agtp-quic</td>
               <td class="text-left" rowspan="1" colspan="1">TBD</td>
               <td class="text-left" rowspan="1" colspan="1">UDP</td>
               <td class="text-left" rowspan="1" colspan="1">Agent Transfer Protocol over QUIC</td>
@@ -4069,10 +4073,10 @@ Transport Protocol Port Number Registry:<a href="#section-8.1-1" class="pilcrow"
         </table>
 </section>
 </div>
-<div id="atp-method-registry">
+<div id="agtp-method-registry">
 <section id="section-8.2">
-        <h3 id="name-atp-method-registry">
-<a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-atp-method-registry" class="section-name selfRef">ATP Method Registry</a>
+        <h3 id="name-agtp-method-registry">
+<a href="#section-8.2" class="section-number selfRef">8.2. </a><a href="#name-agtp-method-registry" class="section-name selfRef">AGTP Method Registry</a>
         </h3>
 <p id="section-8.2-1">Establishment of a new IANA registry: Agent Transfer Protocol Methods.<a href="#section-8.2-1" class="pilcrow">¶</a></p>
 <span class="break"></span><dl class="dlParallel" id="section-8.2-2">
@@ -4084,7 +4088,7 @@ Transport Protocol Port Number Registry:<a href="#section-8.1-1" class="pilcrow"
 <dt id="section-8.2-2.3">Registration procedure:</dt>
           <dd style="margin-left: 1.5em" id="section-8.2-2.4">
             <p id="section-8.2-2.4.1">Expert Review per <span>[<a href="#RFC8126" class="cite xref">RFC8126</a>]</span>, with the additional requirement that each registration
-be accompanied by a published specification — at minimum a publicly
+be accompanied by a published specification, at minimum a publicly
 available Internet-Draft or equivalent document. The Designated Expert
 <strong>SHOULD</strong> verify that the proposed method name is unique, the reference
 specification is publicly accessible, and the method definition includes
@@ -4099,10 +4103,10 @@ codes, security considerations).<a href="#section-8.2-2.4.1" class="pilcrow">¶<
         <dd class="break"></dd>
 </dl>
 <p id="section-8.2-3">Initial registrations:<a href="#section-8.2-3" class="pilcrow">¶</a></p>
-<span id="name-initial-atp-method-registry"></span><table class="center" id="table-18">
+<span id="name-initial-agtp-method-registr"></span><table class="center" id="table-18">
           <caption>
 <a href="#table-18" class="selfRef">Table 18</a>:
-<a href="#name-initial-atp-method-registry" class="selfRef">Initial ATP Method Registry Entries</a>
+<a href="#name-initial-agtp-method-registr" class="selfRef">Initial AGTP Method Registry Entries</a>
           </caption>
 <thead>
             <tr>
@@ -4166,10 +4170,10 @@ codes, security considerations).<a href="#section-8.2-2.4.1" class="pilcrow">¶<
         </table>
 </section>
 </div>
-<div id="atp-status-code-registry">
+<div id="agtp-status-code-registry">
 <section id="section-8.3">
-        <h3 id="name-atp-status-code-registry">
-<a href="#section-8.3" class="section-number selfRef">8.3. </a><a href="#name-atp-status-code-registry" class="section-name selfRef">ATP Status Code Registry</a>
+        <h3 id="name-agtp-status-code-registry">
+<a href="#section-8.3" class="section-number selfRef">8.3. </a><a href="#name-agtp-status-code-registry" class="section-name selfRef">AGTP Status Code Registry</a>
         </h3>
 <p id="section-8.3-1">Establishment of a new IANA registry: Agent Transfer Protocol Status Codes.<a href="#section-8.3-1" class="pilcrow">¶</a></p>
 <span class="break"></span><dl class="dlParallel" id="section-8.3-2">
@@ -4184,12 +4188,12 @@ codes, security considerations).<a href="#section-8.2-2.4.1" class="pilcrow">¶<
 </dd>
         <dd class="break"></dd>
 </dl>
-<p id="section-8.3-3">The following ATP-specific status codes — those with no HTTP equivalent —
+<p id="section-8.3-3">The following AGTP-specific status codes, those with no HTTP equivalent, 
 are registered with full definitions:<a href="#section-8.3-3" class="pilcrow">¶</a></p>
-<span id="name-atp-specific-status-code-de"></span><table class="center" id="table-19">
+<span id="name-agtp-specific-status-code-d"></span><table class="center" id="table-19">
           <caption>
 <a href="#table-19" class="selfRef">Table 19</a>:
-<a href="#name-atp-specific-status-code-de" class="selfRef">ATP-Specific Status Code Definitions</a>
+<a href="#name-agtp-specific-status-code-d" class="selfRef">AGTP-Specific Status Code Definitions</a>
           </caption>
 <thead>
             <tr>
@@ -4227,7 +4231,7 @@ are registered with full definitions:<a href="#section-8.3-3" class="pilcrow">¶
         <h3 id="name-header-field-registry">
 <a href="#section-8.4" class="section-number selfRef">8.4. </a><a href="#name-header-field-registry" class="section-name selfRef">Header Field Registry</a>
         </h3>
-<p id="section-8.4-1">ATP header fields are distinct from HTTP header fields and are registered
+<p id="section-8.4-1">AGTP header fields are distinct from HTTP header fields and are registered
 in a new IANA registry: Agent Transfer Protocol Header Fields.<a href="#section-8.4-1" class="pilcrow">¶</a></p>
 <span class="break"></span><dl class="dlParallel" id="section-8.4-2">
           <dt id="section-8.4-2.1">Registry name:</dt>
@@ -4241,11 +4245,11 @@ in a new IANA registry: Agent Transfer Protocol Header Fields.<a href="#section-
 </dd>
         <dd class="break"></dd>
 </dl>
-<p id="section-8.4-3">ATP does not reuse the HTTP Field Name Registry, as ATP header fields have
+<p id="section-8.4-3">AGTP does not reuse the HTTP Field Name Registry, as AGTP header fields have
 different semantics, applicability, and versioning constraints from HTTP
-fields. HTTP header fields are not automatically valid in ATP, and ATP
+fields. HTTP header fields are not automatically valid in AGTP, and AGTP
 header fields are not valid HTTP fields.<a href="#section-8.4-3" class="pilcrow">¶</a></p>
-<p id="section-8.4-4">Initial registrations (all Permanent): ATP-Version, ATP-Method, ATP-Status,
+<p id="section-8.4-4">Initial registrations (all Permanent): AGTP-Version, AGTP-Method, AGTP-Status,
 Agent-ID, Principal-ID, Authority-Scope, Session-ID, Task-ID,
 Delegation-Chain, Priority, TTL, Server-Agent-ID, Attribution-Record,
 Continuation-Token, Supported-Methods.<a href="#section-8.4-4" class="pilcrow">¶</a></p>
@@ -4256,7 +4260,7 @@ Continuation-Token, Supported-Methods.<a href="#section-8.4-4" class="pilcrow">�
         <h3 id="name-uri-scheme-registration">
 <a href="#section-8.5" class="section-number selfRef">8.5. </a><a href="#name-uri-scheme-registration" class="section-name selfRef">URI Scheme Registration</a>
         </h3>
-<p id="section-8.5-1">Registration of the atp:// URI scheme per <span>[<a href="#RFC7595" class="cite xref">RFC7595</a>]</span>, as described in
+<p id="section-8.5-1">Registration of the agtp:// URI scheme per <span>[<a href="#RFC7595" class="cite xref">RFC7595</a>]</span>, as described in
 Section 5.8.6 of this document.<a href="#section-8.5-1" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -4322,17 +4326,17 @@ Section 5.8.6 of this document.<a href="#section-8.5-1" class="pilcrow">¶</a></
         <dd>
 <span class="refAuthor">IBM Research</span>, <span class="refTitle">"Agent Communication Protocol"</span>, <time datetime="2025" class="refDate">2025</time>. </dd>
 <dd class="break"></dd>
+<dt id="AGTP-CERT">[AGTP-CERT]</dt>
+        <dd>
+<span class="refAuthor">Hood, C.</span>, <span class="refTitle">"AGTP Agent Certificate Extension"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-hood-agtp-agent-cert-00</span>, <time datetime="2026" class="refDate">2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-hood-agtp-agent-cert-00">https://datatracker.ietf.org/doc/html/draft-hood-agtp-agent-cert-00</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="AGTP-METHODS">[AGTP-METHODS]</dt>
+        <dd>
+<span class="refAuthor">Hood, C.</span>, <span class="refTitle">"AGTP Standard Extended Method Vocabulary"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-hood-agtp-standard-methods-00</span>, <time datetime="2026" class="refDate">2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-hood-agtp-standard-methods-00">https://datatracker.ietf.org/doc/html/draft-hood-agtp-standard-methods-00</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="ANP">[ANP]</dt>
         <dd>
 <span class="refTitle">"Agent Network Protocol"</span>, <time datetime="2025" class="refDate">2025</time>. </dd>
-<dd class="break"></dd>
-<dt id="ATP-CERT">[ATP-CERT]</dt>
-        <dd>
-<span class="refAuthor">Hood, C.</span>, <span class="refTitle">"ATP Agent Certificate Extension"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-hood-atp-agent-cert-00</span>, <time datetime="2026" class="refDate">2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-hood-atp-agent-cert-00">https://datatracker.ietf.org/doc/html/draft-hood-atp-agent-cert-00</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="ATP-METHODS">[ATP-METHODS]</dt>
-        <dd>
-<span class="refAuthor">Hood, C.</span>, <span class="refTitle">"ATP Standard Extended Method Vocabulary"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-hood-atp-standard-methods-00</span>, <time datetime="2026" class="refDate">2026</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-hood-atp-standard-methods-00">https://datatracker.ietf.org/doc/html/draft-hood-atp-standard-methods-00</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="MCP">[MCP]</dt>
         <dd>
@@ -4424,20 +4428,20 @@ Authority-Scope: booking:* payments:confirm
           </tr>
           <tr>
             <td class="text-left" rowspan="1" colspan="1">*</td>
-            <td class="text-left" rowspan="1" colspan="1">All domains — requires explicit grant; use with caution</td>
+            <td class="text-left" rowspan="1" colspan="1">All domains require explicit grant; use with caution</td>
           </tr>
         </tbody>
       </table>
 </section>
 </div>
-<div id="example-atp-wire-formats">
+<div id="example-agtp-wire-formats">
 <section id="appendix-B">
-      <h2 id="name-example-atp-wire-formats">
-<a href="#appendix-B" class="section-number selfRef">Appendix B. </a><a href="#name-example-atp-wire-formats" class="section-name selfRef">Example ATP Wire Formats</a>
+      <h2 id="name-example-agtp-wire-formats">
+<a href="#appendix-B" class="section-number selfRef">Appendix B. </a><a href="#name-example-agtp-wire-formats" class="section-name selfRef">Example AGTP Wire Formats</a>
       </h2>
 <p id="appendix-B-1">The following examples use a human-readable pseudo-wire format with
-HTTP-style headers followed by a JSON body. The Content-Type for all ATP
-message bodies is application/atp+json.<a href="#appendix-B-1" class="pilcrow">¶</a></p>
+HTTP-style headers followed by a JSON body. The Content-Type for all AGTP
+message bodies is application/agtp+json.<a href="#appendix-B-1" class="pilcrow">¶</a></p>
 <div id="query-request-and-response">
 <section id="appendix-B.1">
         <h3 id="name-query-request-and-response">
@@ -4445,14 +4449,14 @@ message bodies is application/atp+json.<a href="#appendix-B-1" class="pilcrow">�
         </h3>
 <div class="alignLeft art-text artwork" id="appendix-B.1-1">
 <pre>
-ATP/1.0 QUERY
+AGTP/1.0 QUERY
 Agent-ID: agt-7f3a9c2d
 Principal-ID: usr-chris-hood
 Authority-Scope: documents:query knowledge:query
 Session-ID: sess-a1b2c3d4
 Task-ID: task-0042
 TTL: 3000
-Content-Type: application/atp+json
+Content-Type: application/agtp+json
 
 {
   "task_id": "task-0042",
@@ -4465,17 +4469,17 @@ Content-Type: application/atp+json
   }
 }
 
-ATP/1.0 200 OK
+AGTP/1.0 200 OK
 Task-ID: task-0042
 Server-Agent-ID: srv-knowledge-01
 Attribution-Record: [signed attribution token]
-Content-Type: application/atp+json
+Content-Type: application/agtp+json
 
 {
   "status": 200,
   "task_id": "task-0042",
   "result": {
-    "results": [{"content": "...", "source": "doc-atp-research",
+    "results": [{"content": "...", "source": "doc-agtp-research",
                  "confidence": 0.91}],
     "result_count": 1
   }
@@ -4491,14 +4495,14 @@ Content-Type: application/atp+json
         </h3>
 <div class="alignLeft art-text artwork" id="appendix-B.2-1">
 <pre>
-ATP/1.0 BOOK
+AGTP/1.0 BOOK
 Agent-ID: agt-travel-planner
 Principal-ID: usr-chris-hood
 Authority-Scope: booking:* calendar:book
 Session-ID: sess-trip-2026-04
 Task-ID: task-0107
 Priority: normal
-Content-Type: application/atp+json
+Content-Type: application/agtp+json
 
 {
   "method": "BOOK",
@@ -4512,10 +4516,10 @@ Content-Type: application/atp+json
   }
 }
 
-ATP/1.0 200 OK
+AGTP/1.0 200 OK
 Task-ID: task-0107
 Attribution-Record: [signed attribution token]
-Content-Type: application/atp+json
+Content-Type: application/agtp+json
 
 {
   "status": 200,
@@ -4538,14 +4542,14 @@ Content-Type: application/atp+json
         </h3>
 <div class="alignLeft art-text artwork" id="appendix-B.3-1">
 <pre>
-ATP/1.0 ESCALATE
+AGTP/1.0 ESCALATE
 Agent-ID: agt-procurement-03
 Principal-ID: usr-finance-dept
 Authority-Scope: booking:* payments:confirm
 Session-ID: sess-procurement-q2
 Task-ID: task-0881
 Priority: urgent
-Content-Type: application/atp+json
+Content-Type: application/agtp+json
 
 {
   "method": "ESCALATE",
@@ -4564,10 +4568,10 @@ Content-Type: application/atp+json
   }
 }
 
-ATP/1.0 202 Accepted
+AGTP/1.0 202 Accepted
 Task-ID: task-0881
 Server-Agent-ID: srv-escalation-handler
-Content-Type: application/atp+json
+Content-Type: application/agtp+json
 
 {
   "status": 202,
@@ -4591,15 +4595,15 @@ Content-Type: application/atp+json
       <h2 id="name-comparison-table">
 <a href="#appendix-C" class="section-number selfRef">Appendix C. </a><a href="#name-comparison-table" class="section-name selfRef">Comparison Table</a>
       </h2>
-<span id="name-atp-compared-to-existing-ap"></span><table class="center" id="table-21">
+<span id="name-agtp-compared-to-existing-a"></span><table class="center" id="table-21">
         <caption>
 <a href="#table-21" class="selfRef">Table 21</a>:
-<a href="#name-atp-compared-to-existing-ap" class="selfRef">ATP Compared to Existing Approaches</a>
+<a href="#name-agtp-compared-to-existing-a" class="selfRef">AGTP Compared to Existing Approaches</a>
         </caption>
 <thead>
           <tr>
             <th class="text-left" rowspan="1" colspan="1">Criterion</th>
-            <th class="text-left" rowspan="1" colspan="1">ATP</th>
+            <th class="text-left" rowspan="1" colspan="1">AGTP</th>
             <th class="text-left" rowspan="1" colspan="1">HTTP/REST</th>
             <th class="text-left" rowspan="1" colspan="1">gRPC</th>
             <th class="text-left" rowspan="1" colspan="1">A2A / MCP</th>
@@ -4688,7 +4692,7 @@ Content-Type: application/atp+json
 <p id="appendix-C-2">HTTP's method registry (registered with IETF Review per <span>[<a href="#RFC9110" class="cite xref">RFC9110</a>]</span>) is
 effectively frozen for new semantic methods because any new HTTP method
 must be backward-compatible with existing HTTP infrastructure globally.
-ATP's Expert Review + published spec procedure enables the protocol to
+AGTP's Expert Review + published spec procedure enables the protocol to
 evolve its method vocabulary as the agent ecosystem develops, without
 the backward-compatibility constraints of the HTTP method space.<a href="#appendix-C-2" class="pilcrow">¶</a></p>
 </section>
@@ -4705,7 +4709,7 @@ the backward-compatibility constraints of the HTTP method space.<a href="#append
 actions without continuous human supervision per transaction.<a href="#appendix-D-1.2.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
-<dt id="appendix-D-1.3">Agent Transfer Protocol (ATP):</dt>
+<dt id="appendix-D-1.3">Agent Transfer Protocol (AGTP):</dt>
         <dd style="margin-left: 1.5em" id="appendix-D-1.4">
           <p id="appendix-D-1.4.1">The application-layer protocol defined in this document, providing a
 dedicated transport environment for agent traffic.<a href="#appendix-D-1.4.1" class="pilcrow">¶</a></p>
@@ -4713,8 +4717,8 @@ dedicated transport environment for agent traffic.<a href="#appendix-D-1.4.1" cl
         <dd class="break"></dd>
 <dt id="appendix-D-1.5">Agent-ID:</dt>
         <dd style="margin-left: 1.5em" id="appendix-D-1.6">
-          <p id="appendix-D-1.6.1">A unique identifier for a specific agent instance, present in all ATP
-request headers. In the base spec, self-asserted. With <span>[<a href="#ATP-CERT" class="cite xref">ATP-CERT</a>]</span>,
+          <p id="appendix-D-1.6.1">A unique identifier for a specific agent instance, present in all AGTP
+request headers. In the base spec, self-asserted. With <span>[<a href="#AGTP-CERT" class="cite xref">AGTP-CERT</a>]</span>,
 cryptographically bound to a verified identity.<a href="#appendix-D-1.6.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
@@ -4738,20 +4742,20 @@ that led to the current request.<a href="#appendix-D-1.12.1" class="pilcrow">¶<
         <dd class="break"></dd>
 <dt id="appendix-D-1.13">ESCALATE:</dt>
         <dd style="margin-left: 1.5em" id="appendix-D-1.14">
-          <p id="appendix-D-1.14.1">An ATP method representing an agent's intentional deferral of a decision
+          <p id="appendix-D-1.14.1">An AGTP method representing an agent's intentional deferral of a decision
 or action to a human principal or higher-authority agent. A first-class
 method, not a failure code.<a href="#appendix-D-1.14.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 <dt id="appendix-D-1.15">Intent Verb:</dt>
         <dd style="margin-left: 1.5em" id="appendix-D-1.16">
-          <p id="appendix-D-1.16.1">An ATP method name expressing the agent's purpose, as distinguished from
+          <p id="appendix-D-1.16.1">An AGTP method name expressing the agent's purpose, as distinguished from
 HTTP resource-operation verbs (GET, POST, PUT, DELETE).<a href="#appendix-D-1.16.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 <dt id="appendix-D-1.17">Method Registry:</dt>
         <dd style="margin-left: 1.5em" id="appendix-D-1.18">
-          <p id="appendix-D-1.18.1">The IANA-maintained registry of valid ATP method names and their
+          <p id="appendix-D-1.18.1">The IANA-maintained registry of valid AGTP method names and their
 specifications. Registration requires Expert Review and a published
 specification.<a href="#appendix-D-1.18.1" class="pilcrow">¶</a></p>
 </dd>
@@ -4765,32 +4769,32 @@ is accountable for its actions.<a href="#appendix-D-1.20.1" class="pilcrow">¶</
 <dt id="appendix-D-1.21">Principal-ID:</dt>
         <dd style="margin-left: 1.5em" id="appendix-D-1.22">
           <p id="appendix-D-1.22.1">The identifier of the principal on whose behalf an agent operates,
-present in all ATP request headers.<a href="#appendix-D-1.22.1" class="pilcrow">¶</a></p>
+present in all AGTP request headers.<a href="#appendix-D-1.22.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 <dt id="appendix-D-1.23">Scope-Enforcement Point (SEP):</dt>
         <dd style="margin-left: 1.5em" id="appendix-D-1.24">
-          <p id="appendix-D-1.24.1">An ATP-aware infrastructure component — load balancer, gateway, proxy —
-that enforces Authority-Scope compliance on ATP requests without
-application-layer access. Requires <span>[<a href="#ATP-CERT" class="cite xref">ATP-CERT</a>]</span>.<a href="#appendix-D-1.24.1" class="pilcrow">¶</a></p>
+          <p id="appendix-D-1.24.1">An AGTP-aware infrastructure component, load balancer, gateway, proxy,
+that enforces Authority-Scope compliance on AGTP requests without
+application-layer access. Requires <span>[<a href="#AGTP-CERT" class="cite xref">AGTP-CERT</a>]</span>.<a href="#appendix-D-1.24.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 <dt id="appendix-D-1.25">Scope Violation (451):</dt>
         <dd style="margin-left: 1.5em" id="appendix-D-1.26">
-          <p id="appendix-D-1.26.1">An ATP status code returned when an agent requests an action outside its
+          <p id="appendix-D-1.26.1">An AGTP status code returned when an agent requests an action outside its
 declared Authority-Scope. A governance signal, not a protocol error.
 <strong>MUST</strong> be logged.<a href="#appendix-D-1.26.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 <dt id="appendix-D-1.27">Session:</dt>
         <dd style="margin-left: 1.5em" id="appendix-D-1.28">
-          <p id="appendix-D-1.28.1">An ATP persistent connection context shared across multiple method
+          <p id="appendix-D-1.28.1">An AGTP persistent connection context shared across multiple method
 invocations within a single agent workflow.<a href="#appendix-D-1.28.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 <dt id="appendix-D-1.29">551 Authority Chain Broken:</dt>
         <dd style="margin-left: 1.5em" id="appendix-D-1.30">
-          <p id="appendix-D-1.30.1">An ATP status code returned when one or more entries in the
+          <p id="appendix-D-1.30.1">An AGTP status code returned when one or more entries in the
 Delegation-Chain header cannot be verified as part of a valid and
 continuous delegation sequence. <strong>MUST</strong> be logged.<a href="#appendix-D-1.30.1" class="pilcrow">¶</a></p>
 </dd>

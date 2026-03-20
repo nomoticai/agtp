@@ -1,7 +1,7 @@
 ---
-title: "Agent Transfer Protocol (ATP)"
-abbrev: "ATP"
-docname: draft-hood-independent-atp-00
+title: "Agent Transfer Protocol (AGTP)"
+abbrev: "AGTP"
+docname: draft-hood-independent-agtp-00
 category: info
 submissiontype: independent
 ipr: trust200902
@@ -12,7 +12,7 @@ keyword:
   - agentic systems
   - protocol
   - agent traffic
-  - autonomous agents
+  - agent transfer
 
 stand_alone: yes
 pi:
@@ -63,19 +63,19 @@ informative:
   ANP:
     title: "Agent Network Protocol"
     date: 2025
-  ATP-CERT:
-    title: "ATP Agent Certificate Extension"
+  AGTP-CERT:
+    title: "AGTP Agent Certificate Extension"
     author:
       fullname: Chris Hood
     seriesinfo:
-      Internet-Draft: draft-hood-atp-agent-cert-00
+      Internet-Draft: draft-hood-agtp-agent-cert-00
     date: 2026
-  ATP-METHODS:
-    title: "ATP Standard Extended Method Vocabulary"
+  AGTP-METHODS:
+    title: "AGTP Standard Extended Method Vocabulary"
     author:
       fullname: Chris Hood
     seriesinfo:
-      Internet-Draft: draft-hood-atp-standard-methods-00
+      Internet-Draft: draft-hood-agtp-standard-methods-00
     date: 2026
 
 --- abstract
@@ -85,16 +85,16 @@ unstructured, and undifferentiated traffic that flows through HTTP
 indistinguishably from human-initiated requests. HTTP lacks the semantic
 vocabulary, observability primitives, and identity mechanisms required by
 agent systems operating at scale. Existing protocols described as "agent
-protocols" — including MCP, ACP, A2A, and ANP — are messaging-layer
+protocols" including MCP, ACP, A2A, and ANP, are messaging-layer
 constructs that presuppose HTTP as their transport. They do not address
 the underlying transport problem.
 
-This document defines the Agent Transfer Protocol (ATP): a dedicated
-application-layer protocol for AI agent traffic. ATP provides agent-native
+This document defines the Agent Transfer Protocol (AGTP): a dedicated
+application-layer protocol for AI agent traffic. AGTP provides agent-native
 intent methods (QUERY, SUMMARIZE, BOOK, SCHEDULE, LEARN, DELEGATE,
 COLLABORATE, CONFIRM, ESCALATE, NOTIFY), protocol-level agent identity
 and authority headers, and a status code vocabulary designed for the
-conditions AI agent systems encounter. ATP SHOULD prefer QUIC for new
+conditions AI agent systems encounter. AGTP SHOULD prefer QUIC for new
 implementations and MUST support TCP/TLS for compatibility and fallback.
 It is designed to be composable with existing agent frameworks, not to
 replace them.
@@ -107,7 +107,7 @@ replace them.
 aware that certain extensions to this specification -- specifically the
 Agent Certificate extension (Section 7.2) and the ACTIVATE method --
 may be subject to pending patent applications by the author.  The core
-ATP specification is intended for open implementation without royalty
+AGTP specification is intended for open implementation without royalty
 obligation.  The licensor is prepared to grant a royalty-free license
 to implementers consistent with {{RFC8179}}.  IPR disclosures:
 https://datatracker.ietf.org/ipr/ -- see also Section 7.7.
@@ -117,9 +117,9 @@ https://datatracker.ietf.org/ipr/ -- see also Section 7.7.
 
 The deployment of AI agents and multi-agent systems is accelerating
 across enterprise, research, and consumer contexts. These systems execute
-complex, multi-step workflows — querying data sources, booking resources,
+complex, multi-step workflows, querying data sources, booking resources,
 delegating subtasks to peer agents, and escalating decisions to human
-principals — with minimal or no human supervision per transaction.
+principals, with minimal or no human supervision per transaction.
 
 Unlike human-initiated web traffic, agent-generated traffic is dynamic,
 high-frequency, intent-driven, and often stateful across sequences of
@@ -131,8 +131,8 @@ designed with these properties in mind.
 HTTP has served as the internet's primary application-layer transport for
 over three decades. Its evolution through HTTP/2 {{RFC7540}} and HTTP/3
 {{RFC9114}} has improved performance, multiplexing, and latency. However,
-the fundamental model of HTTP — stateless, resource-oriented,
-human-initiated request/response — creates specific failures when applied
+the fundamental model of HTTP being stateless, resource-oriented,
+human-initiated request/response, creates specific failures when applied
 to agentic systems at scale:
 
 - Traffic indistinguishability: Agent-generated requests are structurally
@@ -142,7 +142,7 @@ to agentic systems at scale:
 
 - Method vocabulary mismatch: HTTP's method set (GET, POST, PUT, DELETE,
   PATCH) describes resource operations. Agent traffic expresses purposeful
-  intent — summarize, book, delegate, escalate. The mismatch forces intent
+  intent, summarize, book, delegate, escalate. The mismatch forces intent
   into request bodies, invisible to protocol-level handlers.
 
 - Identity and attribution absence: HTTP carries no native mechanism for
@@ -165,7 +165,7 @@ registration procedure, meaning new methods require a full IETF consensus
 process and must be backward-compatible with existing HTTP implementations.
 Adding intent-based verbs (SUMMARIZE, DELEGATE, ESCALATE) to HTTP would
 require every HTTP client, server, proxy, and middleware component to ignore
-or handle unknown methods gracefully — a compatibility constraint that limits
+or handle unknown methods gracefully, a compatibility constraint that limits
 how agent-specific semantics can be expressed at the protocol level.
 
 Second, HTTP carries decades of backward-compatibility constraints. Features
@@ -174,17 +174,23 @@ session-level governance semantics would require HTTP extensions that interact
 unpredictably with existing caching, proxy, and CDN behavior designed for
 human-generated traffic patterns.
 
-Third, the observability goal — making agent traffic distinguishable from
-human traffic at the infrastructure layer — cannot be achieved by adding
+Third, the observability goal making agent traffic distinguishable from
+human traffic at the infrastructure layer cannot be achieved by adding
 fields to HTTP. Infrastructure components route and filter HTTP traffic
 based on methods and headers that are identical across agent and human
 requests. A protocol-level separation is necessary to give infrastructure
 the signal it needs.
 
-ATP is therefore designed as a dedicated protocol rather than an HTTP
-extension. HTTP and ATP coexist: human traffic continues to flow over
-HTTP; agent traffic flows over ATP. The two protocols serve different
+AGTP is therefore designed as a dedicated protocol rather than an HTTP
+extension. HTTP and AGTP coexist: human traffic continues to flow over
+HTTP; agent traffic flows over AGTP. The two protocols serve different
 classes of network participant.
+
+Note: The abbreviation AGTP is used in this document to distinguish 
+the Agent Transfer Protocol from the Authenticated Transfer Protocol 
+(ATP) working group currently proposed within the IETF. The URI 
+scheme agtp:// is proposed for IANA registration as a distinct and 
+unregistered scheme.
 
 ## Motivation for a Dedicated Protocol
 
@@ -192,22 +198,22 @@ These limitations are architectural, not implementational. They cannot be
 resolved by better middleware or application code layered on HTTP. They
 require a protocol designed from first principles for AI agent systems.
 
-ATP is that protocol. It provides a dedicated transport environment for
+AGTP is that protocol. It provides a dedicated transport environment for
 agent traffic with: native intent-based methods, mandatory agent identity
 headers, protocol-level authority scope declaration, and a status code
 vocabulary for the conditions autonomous systems encounter.
 
 ## Scope and Target Audience
 
-This document covers ATP architecture, design principles, stack position,
+This document covers AGTP architecture, design principles, stack position,
 request and response header format, agent-native method definitions and
 semantics, status code vocabulary, security considerations, and IANA
 considerations.
 
 The Agent Certificate extension for cryptographic binding of agent
-identity to ATP header fields is described at a high level in Section 7.2.
+identity to AGTP header fields is described at a high level in Section 7.2.
 Full specification is provided in a separate companion document:
-{{ATP-CERT}}. That extension may be subject to pending intellectual
+{{AGTP-CERT}}. That extension may be subject to pending intellectual
 property claims; see Section 7.7 and the IPR Notice preceding the Abstract.
 
 Target audience: AI agent developers, protocol designers, cloud and network
@@ -231,7 +237,7 @@ Principal:
   is accountable for its actions.
 
 Agent-ID:
-: A unique identifier for a specific agent instance, present in all ATP
+: A unique identifier for a specific agent instance, present in all AGTP
   request headers.
 
 Principal-ID:
@@ -242,7 +248,7 @@ Authority-Scope:
   authorized to take, in the format domain:action or domain:\*.
 
 Intent Method:
-: An ATP method name expressing the agent's purpose, as distinguished from
+: An AGTP method name expressing the agent's purpose, as distinguished from
   HTTP resource-operation verbs.
 
 Delegation Chain:
@@ -258,17 +264,17 @@ Attribution Record:
   purposes.
 
 Session:
-: An ATP persistent connection context shared across multiple method
+: An AGTP persistent connection context shared across multiple method
   invocations within a single agent workflow.
 
 SEP (Scope-Enforcement Point):
-: An ATP-aware infrastructure component — load balancer, gateway, proxy —
+: An AGTP-aware infrastructure component, load balancer, gateway, and proxy,
   that enforces Authority-Scope compliance without application-layer access.
-  Requires the Agent Certificate extension ({{ATP-CERT}}).
+  Requires the Agent Certificate extension ({{AGTP-CERT}}).
 
 # Problem Statement
 
-ATP is motivated by three distinct, compounding failures in how current
+AGTP is motivated by three distinct, compounding failures in how current
 internet infrastructure handles AI agent traffic.
 
 ## Problem 1: Undifferentiated Agent Traffic on HTTP
@@ -276,12 +282,12 @@ internet infrastructure handles AI agent traffic.
 AI agents generate intent-driven, structured traffic that is functionally
 invisible to the infrastructure it traverses. This traffic flows through
 HTTP alongside human traffic with no protocol-level differentiation.
-Observability failure, routing inefficiency, and security blindness result
-— operators cannot determine what fraction of traffic is agent-generated
+Observability failure, routing inefficiency, and security blindness result, 
+operators cannot determine what fraction of traffic is agent-generated
 without application-layer instrumentation that is expensive, inconsistent,
 and easy to circumvent.
 
-ATP response: a dedicated protocol environment for agent traffic.
+AGTP response: a dedicated protocol environment for agent traffic.
 Infrastructure can distinguish, route, monitor, and govern agent traffic
 natively.
 
@@ -289,12 +295,12 @@ natively.
 
 AI agents operate on intent. HTTP's method vocabulary was designed to
 describe operations on resources, not purposeful action. When an agent
-intends to SUMMARIZE a document, BOOK a resource, and SCHEDULE a sequence
-— all three arrive as POST requests. The server receives identical verbs
+intends to SUMMARIZE a document, BOOK a resource, and SCHEDULE a sequence, 
+all three arrive as POST requests. The server receives identical verbs
 with meaningfully different intent buried in request bodies, invisible to
 any protocol-level handler.
 
-ATP response: a vocabulary of agent-native methods that express intent at
+AGTP response: a vocabulary of agent-native methods that express intent at
 the protocol level.
 
 ## Problem 3: No Protocol-Level Identity, Authority, or Attribution for Agents
@@ -305,18 +311,18 @@ holds, which principal is accountable for its actions, or whether it is
 the agent it claims to be. Accountability gaps, authority laundering,
 auditability failure, and multi-agent trust collapse result.
 
-ATP response: agent identity and authority scope embedded in protocol
+AGTP response: agent identity and authority scope embedded in protocol
 headers on every request, with an optional Agent Certificate extension for
 cryptographic verification.
 
 ## Problem Summary
 
-| # | Problem | Current Failure | ATP Response |
+| # | Problem | Current Failure | AGTP Response |
 |---|---------|----------------|--------------|
 | 1 | Undifferentiated traffic | HTTP cannot separate agent traffic | Dedicated protocol environment |
 | 2 | Semantic mismatch | HTTP verbs obscure agent intent | Native intent-based method vocabulary |
 | 3 | No protocol-level identity | Attribution is untraceable | Agent identity and scope in headers |
-{: title="Summary of Problems Addressed by ATP"}
+{: title="Summary of Problems Addressed by AGTP"}
 
 # Related Work and Existing Approaches
 
@@ -365,23 +371,23 @@ WebSockets:
   communication but does not address method semantics or identity.
 
 QUIC {{RFC9000}}:
-: Modern multiplexed transport with reduced connection overhead. ATP
+: Modern multiplexed transport with reduced connection overhead. AGTP
   **SHOULD** prefer QUIC for new implementations. QUIC is a transport
-  primitive; ATP is the application-layer protocol above it.
+  primitive; AGTP is the application-layer protocol above it.
 
 ## The Critical Distinction: Messaging vs. Transport
 
-The most important positioning principle for ATP is the distinction between
+The most important positioning principle for AGTP is the distinction between
 messaging protocols and transport protocols. MCP, ACP, A2A, and ANP are
-messaging protocols — they define what agents say. ATP defines how agent
+messaging protocols, they define what agents say. AGTP defines how agent
 traffic moves.
 
 An analogy: SMTP is a messaging protocol that runs over TCP. SMTP does not
 replace TCP. Saying "TCP is unnecessary because SMTP exists" is a category
 error. The same logic applies here. MCP and its peers define agent messaging
-semantics. ATP defines the transport environment those messages move through.
+semantics. AGTP defines the transport environment those messages move through.
 
-## ATP Positioning: The Proposed Stack
+## AGTP Positioning: The Proposed Stack
 
 ~~~~
 +-----------------------------------------------------+
@@ -389,25 +395,25 @@ semantics. ATP defines the transport environment those messages move through.
 +-----------------------------------------------------+
 |  Messaging Layer  (MCP / ACP / A2A)  [optional]     |
 +-----------------------------------------------------+
-|   ATP - Agent Transfer Protocol      [this spec]    |
+|   AGTP - Agent Transfer Protocol      [this spec]    |
 +-----------------------------------------------------+
 |            TLS 1.3+                  [mandatory]    |
 +-----------------------------------------------------+
 |         TCP / QUIC / UDP                            |
 +-----------------------------------------------------+
 ~~~~
-{: #protocol-stack title="ATP in the Protocol Stack"}
+{: #protocol-stack title="AGTP in the Protocol Stack"}
 
-ATP is not a replacement for messaging protocols. Agents using MCP or A2A
-route those messages over ATP and gain transport-level observability and
-identity without modifying the messaging layer. ATP-native agents that do
-not use a separate messaging protocol interact with ATP methods directly.
+AGTP is not a replacement for messaging protocols. Agents using MCP or A2A
+route those messages over AGTP and gain transport-level observability and
+identity without modifying the messaging layer. AGTP-native agents that do
+not use a separate messaging protocol interact with AGTP methods directly.
 
 # Protocol Overview
 
 ## Stack Position
 
-ATP is an application-layer protocol. It operates above the transport
+AGTP is an application-layer protocol. It operates above the transport
 layer (TCP, UDP, or QUIC) and is wrapped by TLS. It sits below any agent
 messaging protocol in deployments that use one.
 
@@ -421,10 +427,10 @@ messaging protocol in deployments that use one.
 - **MAY** run over UDP where QUIC is not available, subject to
   implementor-defined reliability guarantees.
 
-Suggested port assignment (subject to IANA assignment — see Section 8):
+Suggested port assignment (subject to IANA assignment. See Section 8):
 
-- ATP/QUIC: port 8443 (proposed)
-- ATP/TCP+TLS: port 8080 (proposed)
+- AGTP/QUIC: port 8443 (proposed)
+- AGTP/TCP+TLS: port 8080 (proposed)
 
 ## Design Principles
 
@@ -443,23 +449,23 @@ Agent-native:
   not a human.
 
 Secure by default:
-: TLS 1.3 or higher is mandatory. Unencrypted ATP connections **MUST**
+: TLS 1.3 or higher is mandatory. Unencrypted AGTP connections **MUST**
   be rejected. Agent identity headers are present on every request.
 
 Observable by design:
-: Native metadata in every ATP header provides the minimum information
+: Native metadata in every AGTP header provides the minimum information
   needed for routing, monitoring, and audit without application-layer
   instrumentation.
 
 Composable:
-: ATP works alongside existing agent messaging protocols without requiring
+: AGTP works alongside existing agent messaging protocols without requiring
   modification to those protocols.
 
 ## Connection Model
 
-ATP uses a persistent session model by default, reflecting the reality that
+AGTP uses a persistent session model by default, reflecting the reality that
 agents typically execute multi-step workflows rather than isolated single
-requests. An ATP session is established with a single TLS handshake
+requests. An AGTP session is established with a single TLS handshake
 including agent identity assertion, persists across multiple method
 exchanges, carries a Session-ID header identifying the agent's task
 context, and terminates on explicit session close or inactivity timeout
@@ -475,8 +481,8 @@ individual request.
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| ATP-Version | **MUST** | Protocol version. Current: ATP/1.0 |
-| ATP-Method | **MUST** | The agent intent method (see Section 6) |
+| AGTP-Version | **MUST** | Protocol version. Current: AGTP/1.0 |
+| AGTP-Method | **MUST** | The agent intent method (see Section 6) |
 | Agent-ID | **MUST** | Opaque identifier for the requesting agent instance |
 | Principal-ID | **MUST** | Identifier of the human or system that authorized this agent |
 | Authority-Scope | **MUST** | Declared scope of actions this agent is authorized to take |
@@ -485,25 +491,25 @@ individual request.
 | Delegation-Chain | **MAY** | Ordered list of Agent-IDs if this request was delegated |
 | Priority | **MAY** | Request priority hint: critical, normal, background |
 | TTL | **MAY** | Maximum acceptable response latency in milliseconds |
-{: title="ATP Request Header Fields"}
+{: title="AGTP Request Header Fields"}
 
 ### Response Headers
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| ATP-Version | **MUST** | Protocol version |
-| ATP-Status | **MUST** | Numeric status code (see Section 5.5) |
+| AGTP-Version | **MUST** | Protocol version |
+| AGTP-Status | **MUST** | Numeric status code (see Section 5.5) |
 | Task-ID | **MUST** | Echo of request Task-ID for correlation |
 | Server-Agent-ID | **SHOULD** | Identity of the responding server or agent |
 | Attribution-Record | **SHOULD** | Signed record of the action taken, for audit |
 | Continuation-Token | **MAY** | Token for retrieving additional results in streaming contexts |
-| Supported-Methods | **SHOULD** (on session open) | List of ATP methods supported by this server |
-{: title="ATP Response Header Fields"}
+| Supported-Methods | **SHOULD** (on session open) | List of AGTP methods supported by this server |
+{: title="AGTP Response Header Fields"}
 
 ## Status Codes
 
-ATP defines its own status code space. Codes 451, 550, and 551 are
-ATP-specific with no HTTP equivalent and are registered in the IANA ATP
+AGTP defines its own status code space. Codes 451, 550, and 551 are
+AGTP-specific with no HTTP equivalent and are registered in the IANA AGTP
 Status Code Registry (see Section 8.3).
 
 | Code | Name | Meaning |
@@ -511,7 +517,7 @@ Status Code Registry (see Section 8.3).
 | 200 | OK | Method executed successfully |
 | 202 | Accepted | Method accepted; execution is asynchronous |
 | 204 | No Content | Method executed; no response body |
-| 400 | Bad Request | Malformed ATP request |
+| 400 | Bad Request | Malformed AGTP request |
 | 401 | Unauthorized | Agent-ID not recognized or not authenticated |
 | 403 | Forbidden | Agent lacks authority for requested action per Authority-Scope |
 | 404 | Not Found | Target resource or agent not found |
@@ -519,12 +525,12 @@ Status Code Registry (see Section 8.3).
 | 409 | Conflict | Method conflicts with current state (e.g., BOOK on unavailable resource) |
 | 422 | Unprocessable | Request well-formed but semantically invalid |
 | 429 | Rate Limited | Agent is exceeding permitted request frequency |
-| 451 | Scope Violation | Requested action is outside declared Authority-Scope — ATP-specific |
+| 451 | Scope Violation | Requested action is outside declared Authority-Scope. AGTP-specific |
 | 500 | Server Error | Internal failure in the responding system |
 | 503 | Unavailable | Responding agent or system temporarily unavailable |
-| 550 | Delegation Failure | A delegated sub-agent failed to complete the requested action — ATP-specific |
-| 551 | Authority Chain Broken | Delegation chain contains an unverifiable or broken identity link — ATP-specific |
-{: title="ATP Status Codes"}
+| 550 | Delegation Failure | A delegated sub-agent failed to complete the requested action. AGTP-specific |
+| 551 | Authority Chain Broken | Delegation chain contains an unverifiable or broken identity link. AGTP-specific |
+{: title="AGTP Status Codes"}
 
 Status code 451 (Scope Violation) is a governance signal: the agent
 attempted an action outside its declared Authority-Scope, caught at the
@@ -535,20 +541,20 @@ signals, not protocol errors, and **MUST** be logged for audit purposes.
 
 ## Wire Format and Content-Type
 
-ATP request and response bodies are encoded as JSON. The registered
-Content-Type for ATP message bodies is:
+AGTP request and response bodies are encoded as JSON. The registered
+Content-Type for AGTP message bodies is:
 
 ~~~~
-Content-Type: application/atp+json
+Content-Type: application/agtp+json
 ~~~~
 
-Implementations **MUST** include this Content-Type on all ATP requests and
+Implementations **MUST** include this Content-Type on all AGTP requests and
 responses that carry a message body. Responses with no body (e.g., 204 No
 Content) **MUST NOT** include a Content-Type header. Binary or streaming
 extensions **MAY** define additional Content-Type values as part of their
 companion specifications.
 
-The common structure for all ATP request bodies:
+The common structure for all AGTP request bodies:
 
 ~~~~json
 {
@@ -560,7 +566,7 @@ The common structure for all ATP request bodies:
 }
 ~~~~
 
-And for all ATP response bodies:
+And for all AGTP response bodies:
 
 ~~~~json
 {
@@ -573,12 +579,12 @@ And for all ATP response bodies:
 
 ## Early Implementations
 
-ATP is a proposed specification. No production implementations exist at
+AGTP is a proposed specification. No production implementations exist at
 the time of this writing. The author encourages early prototype
 implementations to validate the protocol design, identify gaps, and
 generate feedback prior to IETF working group submission.
 
-> If you are building an ATP prototype or reference implementation,
+> If you are building an AGTP prototype or reference implementation,
 > please share your findings via the feedback channel listed on the cover
 > of this document. A reference implementation in Python and/or Go is
 > planned as open-source software concurrent with or shortly after IETF
@@ -586,12 +592,12 @@ generate feedback prior to IETF working group submission.
 > incorporated into subsequent draft revisions.
 
 Implementers wishing to experiment before the formal IANA port assignment
-may use port 8443 (ATP/QUIC) and port 8080 (ATP/TCP+TLS) as working
+may use port 8443 (AGTP/QUIC) and port 8080 (AGTP/TCP+TLS) as working
 values. These values are subject to change upon final IANA assignment.
 
 The ACTIVATE method extension, which binds .nomo governed agent packages
-to ATP as a first-class activation operation, is described in a companion
-document and is implemented as an optional extension. Core ATP
+to AGTP as a first-class activation operation, is described in a companion
+document and is implemented as an optional extension. Core AGTP
 implementations need not support ACTIVATE to be compliant with this
 specification.
 
@@ -599,39 +605,39 @@ specification.
 
 ### The Canonical Agent Identifier
 
-Every ATP agent is identified by a canonical Agent-ID: a 256-bit
+Every AGTP agent is identified by a canonical Agent-ID: a 256-bit
 cryptographic identifier derived from the agent's governance-layer Birth
 Certificate at activation time. This identifier is globally unique,
-fixed-length, and — when the Agent Certificate extension is deployed —
+fixed-length, and, when the Agent Certificate extension is deployed,
 cryptographically verifiable at the transport layer.
 
-The URI form of a canonical Agent-ID uses the atp:// scheme:
+The URI form of a canonical Agent-ID uses the agtp:// scheme:
 
 ~~~~
-atp://3a9f2c1d8b7e4a6f0c2d5e9b1a3f7c0d4e8b2a5f9c3d7e1b0a4f8c2d6e0b
+agtp://3a9f2c1d8b7e4a6f0c2d5e9b1a3f7c0d4e8b2a5f9c3d7e1b0a4f8c2d6e0b
 ~~~~
 
-URI length is not a practical constraint for atp:// identifiers.
+URI length is not a practical constraint for agtp:// identifiers.
 256-character URIs are handled without issue by all modern protocol stacks
 and do not require abbreviation or truncation.
 
-The atp:// URI scheme is proposed for IANA registration per {{RFC7595}}
+The agtp:// URI scheme is proposed for IANA registration per {{RFC7595}}
 as an open, unencumbered scheme. This registration is distinct from and
-independent of any intellectual property claims on ATP extensions.
+independent of any intellectual property claims on AGTP extensions.
 
-The canonical Agent-ID is the authoritative identifier in all ATP protocol
+The canonical Agent-ID is the authoritative identifier in all AGTP protocol
 operations: it appears in the Agent-ID header of every request, is the key
 in the certificate registry, and is the cross-layer reference linking the
-ATP Agent Certificate to the governance-layer Birth Certificate. All other
+AGTP Agent Certificate to the governance-layer Birth Certificate. All other
 identification forms described in this section are aliases that resolve to
 a canonical Agent-ID.
 
 ### Human-Friendly Agent Names (Optional Layer)
 
-For deployments with large numbers of agents — particularly enterprise
-environments with hundreds or thousands of agents per organization — the
+For deployments with large numbers of agents, particularly enterprise
+environments with hundreds or thousands of agents per organization, the
 canonical Agent-ID alone is insufficient for human-readable observability,
-audit navigation, and operational management. ATP supports an optional
+audit navigation, and operational management. AGTP supports an optional
 hierarchical naming layer as a convenience alias system on top of canonical
 identifiers.
 
@@ -639,9 +645,9 @@ Human-friendly names follow a structured DNS-style format using the
 .agent or .nomo top-level labels:
 
 ~~~~
-atp://marketing-01.acme.agent
-atp://sales-bot-v2.engineering.acme.agent
-atp://customer-experience.acme.nomo
+agtp://marketing-01.acme.agent
+agtp://sales-bot-v2.engineering.acme.agent
+agtp://customer-experience.acme.nomo
 ~~~~
 
 The structure is: \[agent-label\].\[department\].\[organization\].\[tld\]
@@ -656,14 +662,14 @@ The wildcard form acme.agent:sales-\* matches all agents whose friendly
 name begins with sales- within the acme.agent namespace.
 
 Human-friendly names **MUST NOT** be used as Agent-ID header values in
-ATP protocol messages. The Agent-ID header always carries the canonical
+AGTP protocol messages. The Agent-ID header always carries the canonical
 256-bit identifier. Friendly names are a resolution and management layer;
 they are not transport-layer identifiers.
 
 ### Governed Name Registration
 
 Human-friendly name registration is tied to the governed activation flow
-and ATP Agent Certificate issuance process. An agent may only claim a
+and AGTP Agent Certificate issuance process. An agent may only claim a
 friendly name after successfully completing the atomic activation protocol
 and receiving an Active lifecycle state in the certificate registry.
 
@@ -698,15 +704,15 @@ DNS-based resolution:
   its governance zone domain:
 
 ~~~~
-_agent.acme.agent. IN TXT "atp-id=3a9f2c1d8b7e4a6f..."
+_agent.acme.agent. IN TXT "agtp-id=3a9f2c1d8b7e4a6f..."
 ~~~~
 
-ATP-native resolution:
-: An ATP QUERY request to the governance platform's resolution endpoint
+AGTP-native resolution:
+: An AGTP QUERY request to the governance platform's resolution endpoint
   resolves a friendly name to a canonical Agent-ID along with the agent's
-  current lifecycle state, governance zone, trust tier, and ATP Agent
+  current lifecycle state, governance zone, trust tier, and AGTP Agent
   Certificate status. Resolution responses carry Content-Type:
-  application/atp+json:
+  application/agtp+json:
 
 ~~~~json
 {
@@ -721,7 +727,7 @@ ATP-native resolution:
 ~~~~
 
 Implementations **MUST** treat the canonical Agent-ID as authoritative
-in the event of a conflict between DNS-based and ATP-native resolution
+in the event of a conflict between DNS-based and AGTP-native resolution
 results.
 
 ### Scaling Considerations
@@ -734,25 +740,25 @@ name registry is a lightweight key-value store indexed on
 (governance_zone, friendly_name) with a pointer to certificate_id,
 adding O(1) per-resolution overhead.
 
-### IANA Considerations for the atp:// URI Scheme
+### IANA Considerations for the agtp:// URI Scheme
 
-This document proposes registration of the atp:// URI scheme with IANA
+This document proposes registration of the agtp:// URI scheme with IANA
 per {{RFC7595}}. Registration template:
 
 URI scheme name:
-: atp
+: agtp
 
 Status:
 : Permanent
 
 URI scheme syntax:
-: atp://\[canonical-agent-id\] or atp://\[friendly-name\]
+: agtp://\[canonical-agent-id\] or agtp://\[friendly-name\]
 
 URI scheme semantics:
 : Identifies an AI agent operating over the Agent Transfer Protocol.
   The canonical form uses a 256-bit hex-encoded cryptographic identifier.
   The friendly-name form uses a hierarchical DNS-style label resolvable
-  to a canonical identifier via DNS TXT records or ATP-native lookup.
+  to a canonical identifier via DNS TXT records or AGTP-native lookup.
 
 Applications/protocols that use this URI scheme:
 : Agent Transfer Protocol (this document)
@@ -767,14 +773,14 @@ Contact:
 References:
 : This document
 
-The atp:// URI scheme registration is open and unencumbered. No
+The agtp:// URI scheme registration is open and unencumbered. No
 intellectual property claims apply to the URI scheme itself.
 
 # Method Definitions
 
 ## Design Philosophy
 
-ATP methods are intent verbs, not resource operations. Each method
+AGTP methods are intent verbs, not resource operations. Each method
 expresses what an agent is trying to accomplish. Method names are
 uppercase ASCII strings. Methods that modify state are NOT idempotent
 by default unless explicitly marked. All methods accept a context
@@ -848,7 +854,7 @@ a durable plan, not an immediate execution.
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| steps | **MUST** | Ordered list of ATP method calls with parameters |
+| steps | **MUST** | Ordered list of AGTP method calls with parameters |
 | trigger | **MUST** | immediate, datetime, event, or condition |
 | trigger\_value | **MUST** (if not immediate) | Datetime, event name, or condition expression |
 | on\_failure | **SHOULD** | Behavior on step failure: abort, skip, retry, escalate |
@@ -861,7 +867,7 @@ execution timestamp. Idempotent: No.
 ### LEARN
 
 Purpose: Update the agent's session context, knowledge state, or persistent
-memory. An explicit context write — the agent asserts that something should
+memory. An explicit context write where the agent asserts that something should
 be retained.
 
 | Parameter | Required | Description |
@@ -879,16 +885,16 @@ Response: Confirmation with learn_id and effective scope. Idempotent: No.
 ### DELEGATE
 
 Purpose: Transfer execution of a task or method to a sub-agent or
-downstream system. Initiates a new ATP session on behalf of the delegating
+downstream system. Initiates a new AGTP session on behalf of the delegating
 agent, carrying forward authority lineage.
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
 | target\_agent\_id | **MUST** | Identifier of the agent to delegate to |
-| task | **MUST** | ATP method call (or sequence) to execute |
-| authority\_scope | **MUST** | Scope granted to sub-agent — **MUST** be a strict subset of delegating agent's scope |
+| task | **MUST** | AGTP method call (or sequence) to execute |
+| authority\_scope | **MUST** | Scope granted to sub-agent **MUST** be a strict subset of delegating agent's scope |
 | delegation\_token | **MUST** | Signed token proving delegation authority |
-| callback | **SHOULD** | ATP endpoint for result delivery |
+| callback | **SHOULD** | AGTP endpoint for result delivery |
 | deadline | **MAY** | Maximum time for task completion |
 {: title="DELEGATE Parameters"}
 
@@ -913,7 +919,7 @@ work in parallel or in defined roles toward a shared goal. Unlike DELEGATE
 {: title="COLLABORATE Parameters"}
 
 Response: Collaboration session receipt with collaboration_id. Each
-collaborator receives an ATP NOTIFY to join. Idempotent: No.
+collaborator receives an AGTP NOTIFY to join. Idempotent: No.
 
 ### CONFIRM
 
@@ -936,7 +942,7 @@ Idempotent: Yes.
 Purpose: Route a task, decision, or exception to a human principal or
 higher-authority agent when the current agent cannot or should not proceed.
 ESCALATE is the protocol-level expression of meaningful friction in AI
-systems — a first-class method, not a failure code.
+systems as a first-class method.
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
@@ -951,7 +957,7 @@ systems — a first-class method, not a failure code.
 Response: Escalation receipt with escalation_id and routing confirmation.
 The escalated task is paused until resolved via CONFIRM. Idempotent: Yes.
 An agent that escalates appropriately is functioning correctly. Governance
-frameworks built on ATP can use escalation frequency and reason codes as
+frameworks built on AGTP can use escalation frequency and reason codes as
 observability signals for systemic issues.
 
 ### NOTIFY
@@ -985,14 +991,14 @@ Response: Delivery receipt with notification_id. Idempotent: No.
 | CONFIRM | Attest to a prior action | Yes | Yes | 404, 400 |
 | ESCALATE | Defer to human/authority | Yes | Yes | 404 |
 | NOTIFY | Push information | No | No | 400, 404 |
-{: title="ATP Core Method Summary"}
+{: title="AGTP Core Method Summary"}
 
 ## Method Registry and Extensibility
 
-ATP defines a formal Method Registry maintained by IANA (see Section 8.2).
+AGTP defines a formal Method Registry maintained by IANA (see Section 8.2).
 Any party may submit a new method for registration. The registration
 procedure is Expert Review, and registration **MUST** be accompanied by a
-published specification — at minimum an IETF Internet-Draft or equivalent
+published specification, at minimum an IETF Internet-Draft or equivalent
 publicly available document. Registered methods **MUST**:
 
 1. Have a unique uppercase ASCII name
@@ -1015,27 +1021,27 @@ Clients **SHOULD** check this list before invoking non-core methods.
 
 ### Three-Tier Method Architecture
 
-The ATP method vocabulary is organized into three tiers reflecting
+The AGTP method vocabulary is organized into three tiers reflecting
 different levels of universality, specificity, and domain relevance.
 
-Tier 1 — Core Methods (defined in Section 6.2):
-: The baseline vocabulary required for ATP compliance. Every conformant
-  ATP implementation **MUST** support all Tier 1 methods.
+Tier 1. Core Methods (defined in Section 6.2):
+: The baseline vocabulary required for AGTP compliance. Every conformant
+  AGTP implementation **MUST** support all Tier 1 methods.
 
-Tier 2 — Standard Extended Methods:
-: Registered in the IANA ATP Method Registry and available for use in any
-  ATP implementation. Not required for baseline compliance but **SHOULD**
-  be implemented where their semantics apply. Defined in {{ATP-METHODS}}.
+Tier 2. Standard Extended Methods:
+: Registered in the IANA AGTP Method Registry and available for use in any
+  AGTP implementation. Not required for baseline compliance but **SHOULD**
+  be implemented where their semantics apply. Defined in {{AGTP-METHODS}}.
 
-Tier 3 — Industry Profile Methods:
+Tier 3. Industry Profile Methods:
 : Domain-specific method sets defined and registered by industry
-  communities as named ATP profiles. Valid within deployments that declare
+  communities as named AGTP profiles. Valid within deployments that declare
   support for the relevant profile. Not required in general-purpose
   implementations.
 
 ### Method Category Taxonomy
 
-All ATP methods are organized into five categories:
+All AGTP methods are organized into five categories:
 
 ACQUIRE:
 : Retrieve data, resources, or state without modifying it. Typically
@@ -1075,7 +1081,7 @@ ORCHESTRATE:
 ### Standard Extended Methods (Tier 2)
 
 The following methods constitute the initial Tier 2 registration set,
-defined in {{ATP-METHODS}}. Listed here by category with brief semantic
+defined in {{AGTP-METHODS}}. Listed here by category with brief semantic
 definitions; full parameter specifications are in the companion document.
 
 ACQUIRE category: FETCH, SEARCH, SCAN, PULL, IMPORT, FIND.
@@ -1097,8 +1103,8 @@ parameter; implementations **MUST NOT** accept free-form execution strings.
 
 ### Short-Form and Industry-Inspired Methods
 
-A set of short-form verb methods — SET, TAKE, OPEN, START, CALL, MAKE,
-TURN, BREAK — are provisionally catalogued as candidates for Tier 2
+A set of short-form verb methods, e.g., SET, TAKE, OPEN, START, CALL, MAKE,
+TURN, BREAK, are provisionally catalogued as candidates for Tier 2
 registration. These verbs are highly context-dependent and their semantics
 vary significantly across deployment domains.
 
@@ -1110,14 +1116,14 @@ during the experimentation period.
 
 ### Industry Profile Method Sets
 
-ATP recognizes that specific industries require method vocabularies
+AGTP recognizes that specific industries require method vocabularies
 reflecting domain-specific operations that would be inappropriate in a
 general-purpose standard. Industry profile method sets are defined and
-registered as named ATP profiles. A profile is a published companion
+registered as named AGTP profiles. A profile is a published companion
 specification that:
 
-1. Declares a profile name (e.g., atp-profile-healthcare,
-   atp-profile-financial, atp-profile-legaltech)
+1. Declares a profile name (e.g., agtp-profile-healthcare,
+   agtp-profile-financial, agtp-profile-legaltech)
 2. Defines one or more industry-specific methods with full parameter
    specifications, error codes, and security considerations
 3. Specifies which Tier 1 and Tier 2 methods are REQUIRED, RECOMMENDED,
@@ -1138,7 +1144,7 @@ PRESERVE
 Infrastructure: PROVISION, DEPROVISION, ROLLBACK, SNAPSHOT, FAILOVER
 
 Industry communities are encouraged to develop and submit profile
-specifications through the IETF process. The IANA ATP Method Registry will
+specifications through the IETF process. The IANA AGTP Method Registry will
 maintain a profile index alongside the core and standard method registries.
 
 ### Registration Path for New Methods
@@ -1150,7 +1156,7 @@ For Tier 2 Standard Methods:
 
 For Industry Profile Methods:
 : Submit a profile specification to the IETF (or a recognized domain
-  standards body with an established ATP registry liaison) covering all
+  standards body with an established AGTP registry liaison) covering all
   methods in the profile and profile compliance requirements.
 
 For Experimental Methods:
@@ -1159,32 +1165,32 @@ For Experimental Methods:
   registration process. Experimental method names do not reserve the
   unprefixed name.
 
-The ATP Method Registry is published at:
-https://www.iana.org/assignments/atp-methods/
+The AGTP Method Registry is published at:
+https://www.iana.org/assignments/agtp-methods/
 
 # Security Considerations
 
 This section satisfies the mandatory IETF Security Considerations
-requirement. All ATP implementations **MUST** address the considerations
+requirement. All AGTP implementations **MUST** address the considerations
 described here.
 
 ## Mandatory TLS
 
-All ATP connections **MUST** use TLS 1.3 or higher. Implementations
+All AGTP connections **MUST** use TLS 1.3 or higher. Implementations
 **MUST** reject connections using TLS 1.2 or below. Certificate validation
 follows standard PKI practices per {{RFC5280}}. Servers **MUST** present
 a valid certificate.
 
 ## Agent Identity Headers and Agent Certificate Extension
 
-Every ATP request **MUST** include Agent-ID and Principal-ID header fields.
+Every AGTP request **MUST** include Agent-ID and Principal-ID header fields.
 In the base specification, these fields are not cryptographically
-authenticated — they are self-asserted but logged mandatorily for
+authenticated. They are self-asserted but logged mandatorily for
 auditability. Implementations **SHOULD** use logging and anomaly detection
 to identify inconsistencies.
 
 Full cryptographic verification of agent identity and Authority-Scope is
-provided by the ATP Agent Certificate extension {{ATP-CERT}}. That
+provided by the AGTP Agent Certificate extension {{AGTP-CERT}}. That
 extension binds Agent-ID, Principal-ID, and Authority-Scope to an X.509
 v3 certificate presented during TLS mutual authentication, enabling
 infrastructure-layer identity and scope verification without
@@ -1197,19 +1203,19 @@ extension.
 > preceding the Abstract for details. The licensor is prepared to grant
 > a royalty-free license to implementers.
 
-Every ATP server **MUST** log Agent-ID and Principal-ID fields for every
+Every AGTP server **MUST** log Agent-ID and Principal-ID fields for every
 request, creating an attributable audit trail even in deployments without
 the Certificate extension.
 
 ## Authority Scope Enforcement
 
 The Authority-Scope header declares what actions the agent is authorized
-to take. Compliant ATP servers **MUST** parse the Authority-Scope on every
+to take. Compliant AGTP servers **MUST** parse the Authority-Scope on every
 request, return 451 Scope Violation for any method that exceeds declared
 scope, and log all scope violations for audit purposes. Scope declarations
 are self-asserted in the base spec, analogous to scope assertions in
 OAuth 2.0 {{RFC6749}}. Cryptographically signed and infrastructure-enforced
-scopes are defined in {{ATP-CERT}}.
+scopes are defined in {{AGTP-CERT}}.
 
 ## Threat Model
 
@@ -1217,7 +1223,7 @@ scopes are defined in {{ATP-CERT}}.
 
 Threat: A malicious actor forges Agent-ID and Principal-ID headers to
 impersonate a trusted agent. Base spec mitigation: mandatory logging and
-anomaly detection. Full mitigation requires {{ATP-CERT}}.
+anomaly detection. Full mitigation requires {{AGTP-CERT}}.
 
 ### Authority Laundering
 
@@ -1231,14 +1237,14 @@ strict subset of the delegating agent's scope.
 Threat: A malicious agent inserts itself into a DELEGATE chain. Mitigation:
 Delegation-Chain headers are logged at each hop. 551 Authority Chain Broken
 is returned if any chain entry is unverifiable. Full mitigation requires
-{{ATP-CERT}} for signed delegation tokens.
+{{AGTP-CERT}} for signed delegation tokens.
 
 ### Denial of Service via High-Frequency Agent Traffic
 
-Threat: Agents — compromised, misconfigured, or adversarial — generate
+Threat: Agents that are compromised, misconfigured, or adversarial, generate
 extremely high request volumes. Mitigation: 429 Rate Limited status code.
 Rate limiting **SHOULD** be applied per Agent-ID and per Principal-ID.
-When {{ATP-CERT}} is deployed, per-Agent-ID quotas can be cryptographically
+When {{AGTP-CERT}} is deployed, per-Agent-ID quotas can be cryptographically
 tied to verified identity, preventing quota evasion through Agent-ID
 spoofing.
 
@@ -1267,30 +1273,30 @@ sensitive:
 - Session-ID and Task-ID reveal workflow patterns
 - Delegation-Chain reveals multi-agent architecture
 
-ATP logs containing these fields **MUST** be treated as sensitive
+AGTP logs containing these fields **MUST** be treated as sensitive
 operational data. Operators **MUST** implement appropriate access controls,
 retention limits, and data minimization practices consistent with
 applicable privacy regulations.
 
 Where privacy-preserving attribution is required, implementations **MAY**
 use pseudonymous Agent-IDs with a separate trusted resolution service.
-Under this model, the Agent-ID transmitted in ATP headers is an opaque,
-unlinkable identifier; a trusted resolution service — accessible only to
-authorized parties — maps the opaque identifier to the true agent identity
+Under this model, the Agent-ID transmitted in AGTP headers is an opaque,
+unlinkable identifier; a trusted resolution service, accessible only to
+authorized parties, maps the opaque identifier to the true agent identity
 for audit and accountability purposes. The architecture for pseudonymous
 agent identity resolution is reserved for a future companion document.
 
 ## Denial-of-Service Considerations
 
-ATP's agent identity headers provide a mechanism for more precise
+AGTP's agent identity headers provide a mechanism for more precise
 denial-of-service mitigation than is possible with HTTP. Rate limiting
 **SHOULD** be applied per Agent-ID and per Principal-ID in addition to
 per-IP-address controls.
 
-When {{ATP-CERT}} is deployed, per-Agent-ID rate limiting can be
+When {{AGTP-CERT}} is deployed, per-Agent-ID rate limiting can be
 cryptographically tied to verified agent identity, preventing quota evasion
 through Agent-ID rotation. Implementations planning high-volume governed
-agent deployments **SHOULD** plan for {{ATP-CERT}} as part of their
+agent deployments **SHOULD** plan for {{AGTP-CERT}} as part of their
 denial-of-service mitigation strategy.
 
 Additional recommended mitigations: Priority header enforcement (Priority:
@@ -1300,16 +1306,16 @@ deployments; and circuit breaker patterns for ESCALATE request floods.
 
 ## Intellectual Property Considerations
 
-The core ATP specification — including all base methods, header fields,
+The core AGTP specification, including all base methods, header fields,
 status codes, connection model, and IANA registrations defined in this
-document — is intended for open implementation without royalty obligation.
+document, is intended for open implementation without royalty obligation.
 
 Certain extensions referenced in this document may be subject to pending
 patent applications by the author, specifically: the Agent Certificate
-extension {{ATP-CERT}}, which provides cryptographic binding of agent
-identity and authority scope to ATP header fields; and the ACTIVATE method,
-which provides ATP-native transmission and activation of governed agent
-packages. Implementers of the core ATP specification are not affected by
+extension {{AGTP-CERT}}, which provides cryptographic binding of agent
+identity and authority scope to AGTP header fields; and the ACTIVATE method,
+which provides AGTP-native transmission and activation of governed agent
+packages. Implementers of the core AGTP specification are not affected by
 any intellectual property claims on these extensions.
 
 The licensor is prepared to grant a royalty-free license to implementers
@@ -1332,11 +1338,11 @@ Transport Protocol Port Number Registry:
 
 | Service Name | Port | Transport | Description |
 |---|---|---|---|
-| atp | TBD | TCP | Agent Transfer Protocol over TCP/TLS |
-| atp-quic | TBD | UDP | Agent Transfer Protocol over QUIC |
+| agtp | TBD | TCP | Agent Transfer Protocol over TCP/TLS |
+| agtp-quic | TBD | UDP | Agent Transfer Protocol over QUIC |
 {: title="Proposed Port Assignments"}
 
-## ATP Method Registry
+## AGTP Method Registry
 
 Establishment of a new IANA registry: Agent Transfer Protocol Methods.
 
@@ -1345,7 +1351,7 @@ Registry name:
 
 Registration procedure:
 : Expert Review per {{RFC8126}}, with the additional requirement that each registration
-  be accompanied by a published specification — at minimum a publicly
+  be accompanied by a published specification, at minimum a publicly
   available Internet-Draft or equivalent document. The Designated Expert
   **SHOULD** verify that the proposed method name is unique, the reference
   specification is publicly accessible, and the method definition includes
@@ -1369,9 +1375,9 @@ Initial registrations:
 | CONFIRM | Permanent | This document, Section 6.2 |
 | ESCALATE | Permanent | This document, Section 6.2 |
 | NOTIFY | Permanent | This document, Section 6.2 |
-{: title="Initial ATP Method Registry Entries"}
+{: title="Initial AGTP Method Registry Entries"}
 
-## ATP Status Code Registry
+## AGTP Status Code Registry
 
 Establishment of a new IANA registry: Agent Transfer Protocol Status Codes.
 
@@ -1381,7 +1387,7 @@ Registry name:
 Registration procedure:
 : Expert Review + published specification required.
 
-The following ATP-specific status codes — those with no HTTP equivalent —
+The following AGTP-specific status codes, those with no HTTP equivalent, 
 are registered with full definitions:
 
 | Code | Name | Definition | Reference |
@@ -1389,11 +1395,11 @@ are registered with full definitions:
 | 451 | Scope Violation | The requested action is outside the Authority-Scope declared in the request headers. The server **MUST** log this event. The agent **MUST NOT** retry the same request without modifying its Authority-Scope declaration. This is a governance signal, not a protocol error. | This document, Section 5.5 |
 | 550 | Delegation Failure | A sub-agent to which a task was delegated via the DELEGATE method failed to complete the task within the declared deadline or returned an error. The response body **SHOULD** contain the sub-agent's error details. | This document, Section 5.5 |
 | 551 | Authority Chain Broken | One or more entries in the Delegation-Chain header cannot be verified as part of a valid and continuous delegation sequence. The specific unverifiable entry **SHOULD** be identified in the response body. The server **MUST** log this event. | This document, Section 5.5 |
-{: title="ATP-Specific Status Code Definitions"}
+{: title="AGTP-Specific Status Code Definitions"}
 
 ## Header Field Registry
 
-ATP header fields are distinct from HTTP header fields and are registered
+AGTP header fields are distinct from HTTP header fields and are registered
 in a new IANA registry: Agent Transfer Protocol Header Fields.
 
 Registry name:
@@ -1402,19 +1408,19 @@ Registry name:
 Registration procedure:
 : Expert Review + published specification required.
 
-ATP does not reuse the HTTP Field Name Registry, as ATP header fields have
+AGTP does not reuse the HTTP Field Name Registry, as AGTP header fields have
 different semantics, applicability, and versioning constraints from HTTP
-fields. HTTP header fields are not automatically valid in ATP, and ATP
+fields. HTTP header fields are not automatically valid in AGTP, and AGTP
 header fields are not valid HTTP fields.
 
-Initial registrations (all Permanent): ATP-Version, ATP-Method, ATP-Status,
+Initial registrations (all Permanent): AGTP-Version, AGTP-Method, AGTP-Status,
 Agent-ID, Principal-ID, Authority-Scope, Session-ID, Task-ID,
 Delegation-Chain, Priority, TTL, Server-Agent-ID, Attribution-Record,
 Continuation-Token, Supported-Methods.
 
 ## URI Scheme Registration
 
-Registration of the atp:// URI scheme per {{RFC7595}}, as described in
+Registration of the agtp:// URI scheme per {{RFC7595}}, as described in
 Section 5.8.6 of this document.
 
 --- back
@@ -1447,26 +1453,26 @@ Reserved domains (initial set):
 | agents | Delegation and collaboration with other agents |
 | escalation | Escalation routing and handler management |
 | activation | Governed agent package activation (ACTIVATE method extension) |
-| \* | All domains — requires explicit grant; use with caution |
+| \* | All domains require explicit grant; use with caution |
 {: title="Reserved Authority-Scope Domains"}
 
-# Example ATP Wire Formats
+# Example AGTP Wire Formats
 
 The following examples use a human-readable pseudo-wire format with
-HTTP-style headers followed by a JSON body. The Content-Type for all ATP
-message bodies is application/atp+json.
+HTTP-style headers followed by a JSON body. The Content-Type for all AGTP
+message bodies is application/agtp+json.
 
 ## QUERY Request and Response
 
 ~~~~
-ATP/1.0 QUERY
+AGTP/1.0 QUERY
 Agent-ID: agt-7f3a9c2d
 Principal-ID: usr-chris-hood
 Authority-Scope: documents:query knowledge:query
 Session-ID: sess-a1b2c3d4
 Task-ID: task-0042
 TTL: 3000
-Content-Type: application/atp+json
+Content-Type: application/agtp+json
 
 {
   "task_id": "task-0042",
@@ -1479,17 +1485,17 @@ Content-Type: application/atp+json
   }
 }
 
-ATP/1.0 200 OK
+AGTP/1.0 200 OK
 Task-ID: task-0042
 Server-Agent-ID: srv-knowledge-01
 Attribution-Record: [signed attribution token]
-Content-Type: application/atp+json
+Content-Type: application/agtp+json
 
 {
   "status": 200,
   "task_id": "task-0042",
   "result": {
-    "results": [{"content": "...", "source": "doc-atp-research",
+    "results": [{"content": "...", "source": "doc-agtp-research",
                  "confidence": 0.91}],
     "result_count": 1
   }
@@ -1499,14 +1505,14 @@ Content-Type: application/atp+json
 ## BOOK Request and Response
 
 ~~~~
-ATP/1.0 BOOK
+AGTP/1.0 BOOK
 Agent-ID: agt-travel-planner
 Principal-ID: usr-chris-hood
 Authority-Scope: booking:* calendar:book
 Session-ID: sess-trip-2026-04
 Task-ID: task-0107
 Priority: normal
-Content-Type: application/atp+json
+Content-Type: application/agtp+json
 
 {
   "method": "BOOK",
@@ -1520,10 +1526,10 @@ Content-Type: application/atp+json
   }
 }
 
-ATP/1.0 200 OK
+AGTP/1.0 200 OK
 Task-ID: task-0107
 Attribution-Record: [signed attribution token]
-Content-Type: application/atp+json
+Content-Type: application/agtp+json
 
 {
   "status": 200,
@@ -1540,14 +1546,14 @@ Content-Type: application/atp+json
 ## ESCALATE Request and Response
 
 ~~~~
-ATP/1.0 ESCALATE
+AGTP/1.0 ESCALATE
 Agent-ID: agt-procurement-03
 Principal-ID: usr-finance-dept
 Authority-Scope: booking:* payments:confirm
 Session-ID: sess-procurement-q2
 Task-ID: task-0881
 Priority: urgent
-Content-Type: application/atp+json
+Content-Type: application/agtp+json
 
 {
   "method": "ESCALATE",
@@ -1566,10 +1572,10 @@ Content-Type: application/atp+json
   }
 }
 
-ATP/1.0 202 Accepted
+AGTP/1.0 202 Accepted
 Task-ID: task-0881
 Server-Agent-ID: srv-escalation-handler
-Content-Type: application/atp+json
+Content-Type: application/agtp+json
 
 {
   "status": 202,
@@ -1586,7 +1592,7 @@ Content-Type: application/atp+json
 
 # Comparison Table
 
-| Criterion | ATP | HTTP/REST | gRPC | A2A / MCP |
+| Criterion | AGTP | HTTP/REST | gRPC | A2A / MCP |
 |---|---|---|---|---|
 | Agent-native methods | Yes | No | No | Partial |
 | Intent semantics at protocol level | Native | None | None | Messaging layer only |
@@ -1599,12 +1605,12 @@ Content-Type: application/atp+json
 | Governance/observability | Native | Manual/bolt-on | Manual | Limited |
 | Method registry extensibility | Yes (Expert Review) | Frozen (IETF Review) | N/A | N/A |
 | Open core / royalty-free | Yes | Yes | Yes | Yes |
-{: title="ATP Compared to Existing Approaches"}
+{: title="AGTP Compared to Existing Approaches"}
 
 HTTP's method registry (registered with IETF Review per {{RFC9110}}) is
 effectively frozen for new semantic methods because any new HTTP method
 must be backward-compatible with existing HTTP infrastructure globally.
-ATP's Expert Review + published spec procedure enables the protocol to
+AGTP's Expert Review + published spec procedure enables the protocol to
 evolve its method vocabulary as the agent ecosystem develops, without
 the backward-compatibility constraints of the HTTP method space.
 
@@ -1614,13 +1620,13 @@ Agent:
 : A software system that executes tasks, makes decisions, and takes
   actions without continuous human supervision per transaction.
 
-Agent Transfer Protocol (ATP):
+Agent Transfer Protocol (AGTP):
 : The application-layer protocol defined in this document, providing a
   dedicated transport environment for agent traffic.
 
 Agent-ID:
-: A unique identifier for a specific agent instance, present in all ATP
-  request headers. In the base spec, self-asserted. With {{ATP-CERT}},
+: A unique identifier for a specific agent instance, present in all AGTP
+  request headers. In the base spec, self-asserted. With {{AGTP-CERT}},
   cryptographically bound to a verified identity.
 
 Attribution Record:
@@ -1636,16 +1642,16 @@ Delegation Chain:
   that led to the current request.
 
 ESCALATE:
-: An ATP method representing an agent's intentional deferral of a decision
+: An AGTP method representing an agent's intentional deferral of a decision
   or action to a human principal or higher-authority agent. A first-class
   method, not a failure code.
 
 Intent Verb:
-: An ATP method name expressing the agent's purpose, as distinguished from
+: An AGTP method name expressing the agent's purpose, as distinguished from
   HTTP resource-operation verbs (GET, POST, PUT, DELETE).
 
 Method Registry:
-: The IANA-maintained registry of valid ATP method names and their
+: The IANA-maintained registry of valid AGTP method names and their
   specifications. Registration requires Expert Review and a published
   specification.
 
@@ -1655,23 +1661,23 @@ Principal:
 
 Principal-ID:
 : The identifier of the principal on whose behalf an agent operates,
-  present in all ATP request headers.
+  present in all AGTP request headers.
 
 Scope-Enforcement Point (SEP):
-: An ATP-aware infrastructure component — load balancer, gateway, proxy —
-  that enforces Authority-Scope compliance on ATP requests without
-  application-layer access. Requires {{ATP-CERT}}.
+: An AGTP-aware infrastructure component, load balancer, gateway, proxy,
+  that enforces Authority-Scope compliance on AGTP requests without
+  application-layer access. Requires {{AGTP-CERT}}.
 
 Scope Violation (451):
-: An ATP status code returned when an agent requests an action outside its
+: An AGTP status code returned when an agent requests an action outside its
   declared Authority-Scope. A governance signal, not a protocol error.
   **MUST** be logged.
 
 Session:
-: An ATP persistent connection context shared across multiple method
+: An AGTP persistent connection context shared across multiple method
   invocations within a single agent workflow.
 
 551 Authority Chain Broken:
-: An ATP status code returned when one or more entries in the
+: An AGTP status code returned when one or more entries in the
   Delegation-Chain header cannot be verified as part of a valid and
   continuous delegation sequence. **MUST** be logged.

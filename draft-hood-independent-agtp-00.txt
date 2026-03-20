@@ -8,8 +8,8 @@ Intended status: Informational                             19 March 2026
 Expires: 20 September 2026
 
 
-                     Agent Transfer Protocol (ATP)
-                     draft-hood-independent-atp-00
+                     Agent Transfer Protocol (AGTP)
+                     draft-hood-independent-agtp-00
 
 Abstract
 
@@ -18,17 +18,16 @@ Abstract
    HTTP indistinguishably from human-initiated requests.  HTTP lacks the
    semantic vocabulary, observability primitives, and identity
    mechanisms required by agent systems operating at scale.  Existing
-   protocols described as "agent protocols" — including MCP, ACP, A2A,
-   and ANP — are messaging-layer constructs that presuppose HTTP as
-   their transport.  They do not address the underlying transport
-   problem.
+   protocols described as "agent protocols" including MCP, ACP, A2A, and
+   ANP, are messaging-layer constructs that presuppose HTTP as their
+   transport.  They do not address the underlying transport problem.
 
-   This document defines the Agent Transfer Protocol (ATP): a dedicated
-   application-layer protocol for AI agent traffic.  ATP provides agent-
-   native intent methods (QUERY, SUMMARIZE, BOOK, SCHEDULE, LEARN,
+   This document defines the Agent Transfer Protocol (AGTP): a dedicated
+   application-layer protocol for AI agent traffic.  AGTP provides
+   agent-native intent methods (QUERY, SUMMARIZE, BOOK, SCHEDULE, LEARN,
    DELEGATE, COLLABORATE, CONFIRM, ESCALATE, NOTIFY), protocol-level
    agent identity and authority headers, and a status code vocabulary
-   designed for the conditions AI agent systems encounter.  ATP SHOULD
+   designed for the conditions AI agent systems encounter.  AGTP SHOULD
    prefer QUIC for new implementations and MUST support TCP/TLS for
    compatibility and fallback.  It is designed to be composable with
    existing agent frameworks, not to replace them.
@@ -53,9 +52,10 @@ Status of This Memo
 
 
 
+
 Hood                    Expires 20 September 2026               [Page 1]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
 Copyright Notice
@@ -90,7 +90,7 @@ Table of Contents
      4.2.  Existing Agent Protocols  . . . . . . . . . . . . . . . .   9
      4.3.  Transport-Layer Alternatives  . . . . . . . . . . . . . .   9
      4.4.  The Critical Distinction: Messaging vs. Transport . . . .  10
-     4.5.  ATP Positioning: The Proposed Stack . . . . . . . . . . .  10
+     4.5.  AGTP Positioning: The Proposed Stack  . . . . . . . . . .  10
    5.  Protocol Overview . . . . . . . . . . . . . . . . . . . . . .  10
      5.1.  Stack Position  . . . . . . . . . . . . . . . . . . . . .  10
      5.2.  Design Principles . . . . . . . . . . . . . . . . . . . .  11
@@ -111,11 +111,11 @@ Table of Contents
 
 Hood                    Expires 20 September 2026               [Page 2]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
        5.8.5.  Scaling Considerations  . . . . . . . . . . . . . . .  19
-       5.8.6.  IANA Considerations for the atp:// URI Scheme . . . .  19
+       5.8.6.  IANA Considerations for the agtp:// URI Scheme  . . .  19
    6.  Method Definitions  . . . . . . . . . . . . . . . . . . . . .  19
      6.1.  Design Philosophy . . . . . . . . . . . . . . . . . . . .  20
      6.2.  Core Methods  . . . . . . . . . . . . . . . . . . . . . .  20
@@ -154,8 +154,8 @@ Internet-Draft                     ATP                        March 2026
      7.7.  Intellectual Property Considerations  . . . . . . . . . .  37
    8.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .  38
      8.1.  Port Assignment . . . . . . . . . . . . . . . . . . . . .  38
-     8.2.  ATP Method Registry . . . . . . . . . . . . . . . . . . .  38
-     8.3.  ATP Status Code Registry  . . . . . . . . . . . . . . . .  39
+     8.2.  AGTP Method Registry  . . . . . . . . . . . . . . . . . .  38
+     8.3.  AGTP Status Code Registry . . . . . . . . . . . . . . . .  39
      8.4.  Header Field Registry . . . . . . . . . . . . . . . . . .  40
      8.5.  URI Scheme Registration . . . . . . . . . . . . . . . . .  41
    9.  References  . . . . . . . . . . . . . . . . . . . . . . . . .  41
@@ -167,16 +167,16 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026               [Page 3]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
-   Appendix B.  Example ATP Wire Formats . . . . . . . . . . . . . .  43
+   Appendix B.  Example AGTP Wire Formats  . . . . . . . . . . . . .  44
      B.1.  QUERY Request and Response  . . . . . . . . . . . . . . .  44
-     B.2.  BOOK Request and Response . . . . . . . . . . . . . . . .  44
-     B.3.  ESCALATE Request and Response . . . . . . . . . . . . . .  45
-   Appendix C.  Comparison Table . . . . . . . . . . . . . . . . . .  47
-   Appendix D.  Glossary . . . . . . . . . . . . . . . . . . . . . .  48
-   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  49
+     B.2.  BOOK Request and Response . . . . . . . . . . . . . . . .  45
+     B.3.  ESCALATE Request and Response . . . . . . . . . . . . . .  46
+   Appendix C.  Comparison Table . . . . . . . . . . . . . . . . . .  48
+   Appendix D.  Glossary . . . . . . . . . . . . . . . . . . . . . .  49
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  50
 
 1.  Introduction
 
@@ -184,7 +184,7 @@ Internet-Draft                     ATP                        March 2026
    that certain extensions to this specification -- specifically the
    Agent Certificate extension (Section 7.2) and the ACTIVATE method --
    may be subject to pending patent applications by the author.  The
-   core ATP specification is intended for open implementation without
+   core AGTP specification is intended for open implementation without
    royalty obligation.  The licensor is prepared to grant a royalty-free
    license to implementers consistent with [RFC8179].  IPR disclosures:
    https://datatracker.ietf.org/ipr/ -- see also Section 7.7.
@@ -193,9 +193,9 @@ Internet-Draft                     ATP                        March 2026
 
    The deployment of AI agents and multi-agent systems is accelerating
    across enterprise, research, and consumer contexts.  These systems
-   execute complex, multi-step workflows — querying data sources,
-   booking resources, delegating subtasks to peer agents, and escalating
-   decisions to human principals — with minimal or no human supervision
+   execute complex, multi-step workflows, querying data sources, booking
+   resources, delegating subtasks to peer agents, and escalating
+   decisions to human principals, with minimal or no human supervision
    per transaction.
 
    Unlike human-initiated web traffic, agent-generated traffic is
@@ -208,9 +208,9 @@ Internet-Draft                     ATP                        March 2026
    HTTP has served as the internet's primary application-layer transport
    for over three decades.  Its evolution through HTTP/2 [RFC7540] and
    HTTP/3 [RFC9114] has improved performance, multiplexing, and latency.
-   However, the fundamental model of HTTP — stateless, resource-
-   oriented, human-initiated request/response — creates specific
-   failures when applied to agentic systems at scale:
+   However, the fundamental model of HTTP being stateless, resource-
+   oriented, human-initiated request/response, creates specific failures
+   when applied to agentic systems at scale:
 
    *  Traffic indistinguishability: Agent-generated requests are
       structurally identical to human-initiated requests at the
@@ -223,12 +223,12 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026               [Page 4]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
    *  Method vocabulary mismatch: HTTP's method set (GET, POST, PUT,
       DELETE, PATCH) describes resource operations.  Agent traffic
-      expresses purposeful intent — summarize, book, delegate, escalate.
+      expresses purposeful intent, summarize, book, delegate, escalate.
       The mismatch forces intent into request bodies, invisible to
       protocol-level handlers.
 
@@ -253,8 +253,8 @@ Internet-Draft                     ATP                        March 2026
    existing HTTP implementations.  Adding intent-based verbs (SUMMARIZE,
    DELEGATE, ESCALATE) to HTTP would require every HTTP client, server,
    proxy, and middleware component to ignore or handle unknown methods
-   gracefully — a compatibility constraint that limits how agent-
-   specific semantics can be expressed at the protocol level.
+   gracefully, a compatibility constraint that limits how agent-specific
+   semantics can be expressed at the protocol level.
 
    Second, HTTP carries decades of backward-compatibility constraints.
    Features such as persistent agent identity headers, authority scope
@@ -263,24 +263,30 @@ Internet-Draft                     ATP                        March 2026
    proxy, and CDN behavior designed for human-generated traffic
    patterns.
 
-   Third, the observability goal — making agent traffic distinguishable
-   from human traffic at the infrastructure layer — cannot be achieved
-   by adding fields to HTTP.  Infrastructure components route and filter
+   Third, the observability goal making agent traffic distinguishable
+   from human traffic at the infrastructure layer cannot be achieved by
+   adding fields to HTTP.  Infrastructure components route and filter
    HTTP traffic based on methods and headers that are identical across
    agent and human requests.  A protocol-level separation is necessary
    to give infrastructure the signal it needs.
 
-   ATP is therefore designed as a dedicated protocol rather than an HTTP
-   extension.  HTTP and ATP coexist: human traffic continues to flow
-   over HTTP; agent traffic flows over ATP.  The two protocols serve
-   different classes of network participant.
+   AGTP is therefore designed as a dedicated protocol rather than an
+   HTTP extension.  HTTP and AGTP coexist: human traffic continues to
+   flow over HTTP; agent traffic flows over AGTP.  The two protocols
+   serve different classes of network participant.
 
 
 
 Hood                    Expires 20 September 2026               [Page 5]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
+
+   Note: The abbreviation AGTP is used in this document to distinguish
+   the Agent Transfer Protocol from the Authenticated Transfer Protocol
+   (ATP) working group currently proposed within the IETF.  The URI
+   scheme agtp:// is proposed for IANA registration as a distinct and
+   unregistered scheme.
 
 1.4.  Motivation for a Dedicated Protocol
 
@@ -289,7 +295,7 @@ Internet-Draft                     ATP                        March 2026
    on HTTP.  They require a protocol designed from first principles for
    AI agent systems.
 
-   ATP is that protocol.  It provides a dedicated transport environment
+   AGTP is that protocol.  It provides a dedicated transport environment
    for agent traffic with: native intent-based methods, mandatory agent
    identity headers, protocol-level authority scope declaration, and a
    status code vocabulary for the conditions autonomous systems
@@ -297,15 +303,15 @@ Internet-Draft                     ATP                        March 2026
 
 1.5.  Scope and Target Audience
 
-   This document covers ATP architecture, design principles, stack
+   This document covers AGTP architecture, design principles, stack
    position, request and response header format, agent-native method
    definitions and semantics, status code vocabulary, security
    considerations, and IANA considerations.
 
    The Agent Certificate extension for cryptographic binding of agent
-   identity to ATP header fields is described at a high level in
+   identity to AGTP header fields is described at a high level in
    Section 7.2.  Full specification is provided in a separate companion
-   document: [ATP-CERT].  That extension may be subject to pending
+   document: [AGTP-CERT].  That extension may be subject to pending
    intellectual property claims; see Section 7.7 and the IPR Notice
    preceding the Abstract.
 
@@ -325,18 +331,18 @@ Internet-Draft                     ATP                        March 2026
       and takes actions without continuous human supervision per
       transaction.
 
-   Principal:  The human, organization, or system that authorized an
-      agent to act and is accountable for its actions.
-
-   Agent-ID:  A unique identifier for a specific agent instance, present
-      in all ATP request headers.
-
 
 
 Hood                    Expires 20 September 2026               [Page 6]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
+
+   Principal:  The human, organization, or system that authorized an
+      agent to act and is accountable for its actions.
+
+   Agent-ID:  A unique identifier for a specific agent instance, present
+      in all AGTP request headers.
 
    Principal-ID:  The identifier of the principal on whose behalf an
       agent operates.
@@ -345,8 +351,8 @@ Internet-Draft                     ATP                        March 2026
       an agent is authorized to take, in the format domain:action or
       domain:*.
 
-   Intent Method:  An ATP method name expressing the agent's purpose, as
-      distinguished from HTTP resource-operation verbs.
+   Intent Method:  An AGTP method name expressing the agent's purpose,
+      as distinguished from HTTP resource-operation verbs.
 
    Delegation Chain:  An ordered record of Agent-IDs representing the
       sequence of delegations that produced the current request.
@@ -357,17 +363,17 @@ Internet-Draft                     ATP                        March 2026
    Attribution Record:  A logged record of an agent action sufficient
       for audit and compliance purposes.
 
-   Session:  An ATP persistent connection context shared across multiple
-      method invocations within a single agent workflow.
+   Session:  An AGTP persistent connection context shared across
+      multiple method invocations within a single agent workflow.
 
-   SEP (Scope-Enforcement Point):  An ATP-aware infrastructure component
-      — load balancer, gateway, proxy — that enforces Authority-Scope
-      compliance without application-layer access.  Requires the Agent
-      Certificate extension ([ATP-CERT]).
+   SEP (Scope-Enforcement Point):  An AGTP-aware infrastructure
+      component, load balancer, gateway, and proxy, that enforces
+      Authority-Scope compliance without application-layer access.
+      Requires the Agent Certificate extension ([AGTP-CERT]).
 
 3.  Problem Statement
 
-   ATP is motivated by three distinct, compounding failures in how
+   AGTP is motivated by three distinct, compounding failures in how
    current internet infrastructure handles AI agent traffic.
 
 3.1.  Problem 1: Undifferentiated Agent Traffic on HTTP
@@ -376,23 +382,21 @@ Internet-Draft                     ATP                        March 2026
    functionally invisible to the infrastructure it traverses.  This
    traffic flows through HTTP alongside human traffic with no protocol-
    level differentiation.  Observability failure, routing inefficiency,
-   and security blindness result — operators cannot determine what
+   and security blindness result, operators cannot determine what
    fraction of traffic is agent-generated without application-layer
    instrumentation that is expensive, inconsistent, and easy to
    circumvent.
-
-   ATP response: a dedicated protocol environment for agent traffic.
-   Infrastructure can distinguish, route, monitor, and govern agent
-   traffic natively.
-
-
 
 
 
 Hood                    Expires 20 September 2026               [Page 7]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
+
+   AGTP response: a dedicated protocol environment for agent traffic.
+   Infrastructure can distinguish, route, monitor, and govern agent
+   traffic natively.
 
 3.2.  Problem 2: Semantic Mismatch Between Agent Intent and Available
       Methods
@@ -400,11 +404,11 @@ Internet-Draft                     ATP                        March 2026
    AI agents operate on intent.  HTTP's method vocabulary was designed
    to describe operations on resources, not purposeful action.  When an
    agent intends to SUMMARIZE a document, BOOK a resource, and SCHEDULE
-   a sequence — all three arrive as POST requests.  The server receives
+   a sequence, all three arrive as POST requests.  The server receives
    identical verbs with meaningfully different intent buried in request
    bodies, invisible to any protocol-level handler.
 
-   ATP response: a vocabulary of agent-native methods that express
+   AGTP response: a vocabulary of agent-native methods that express
    intent at the protocol level.
 
 3.3.  Problem 3: No Protocol-Level Identity, Authority, or Attribution
@@ -417,14 +421,14 @@ Internet-Draft                     ATP                        March 2026
    authority laundering, auditability failure, and multi-agent trust
    collapse result.
 
-   ATP response: agent identity and authority scope embedded in protocol
-   headers on every request, with an optional Agent Certificate
+   AGTP response: agent identity and authority scope embedded in
+   protocol headers on every request, with an optional Agent Certificate
    extension for cryptographic verification.
 
 3.4.  Problem Summary
 
    +===+==================+======================+=====================+
-   | # | Problem          | Current Failure      | ATP Response        |
+   | # | Problem          | Current Failure      | AGTP Response       |
    +===+==================+======================+=====================+
    | 1 | Undifferentiated | HTTP cannot separate | Dedicated protocol  |
    |   | traffic          | agent traffic        | environment         |
@@ -437,17 +441,13 @@ Internet-Draft                     ATP                        March 2026
    |   | level identity   | untraceable          | scope in headers    |
    +---+------------------+----------------------+---------------------+
 
-               Table 1: Summary of Problems Addressed by ATP
-
-
-
-
+               Table 1: Summary of Problems Addressed by AGTP
 
 
 
 Hood                    Expires 20 September 2026               [Page 8]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
 4.  Related Work and Existing Approaches
@@ -503,53 +503,53 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026               [Page 9]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
-      overhead.  ATP *SHOULD* prefer QUIC for new implementations.  QUIC
-      is a transport primitive; ATP is the application-layer protocol
-      above it.
+      overhead.  AGTP *SHOULD* prefer QUIC for new implementations.
+      QUIC is a transport primitive; AGTP is the application-layer
+      protocol above it.
 
 4.4.  The Critical Distinction: Messaging vs. Transport
 
-   The most important positioning principle for ATP is the distinction
+   The most important positioning principle for AGTP is the distinction
    between messaging protocols and transport protocols.  MCP, ACP, A2A,
-   and ANP are messaging protocols — they define what agents say.  ATP
+   and ANP are messaging protocols, they define what agents say.  AGTP
    defines how agent traffic moves.
 
    An analogy: SMTP is a messaging protocol that runs over TCP.  SMTP
    does not replace TCP.  Saying "TCP is unnecessary because SMTP
    exists" is a category error.  The same logic applies here.  MCP and
-   its peers define agent messaging semantics.  ATP defines the
+   its peers define agent messaging semantics.  AGTP defines the
    transport environment those messages move through.
 
-4.5.  ATP Positioning: The Proposed Stack
+4.5.  AGTP Positioning: The Proposed Stack
 
    +-----------------------------------------------------+
    |            Agent Application Logic                  |
    +-----------------------------------------------------+
    |  Messaging Layer  (MCP / ACP / A2A)  [optional]     |
    +-----------------------------------------------------+
-   |   ATP - Agent Transfer Protocol      [this spec]    |
+   |   AGTP - Agent Transfer Protocol      [this spec]    |
    +-----------------------------------------------------+
    |            TLS 1.3+                  [mandatory]    |
    +-----------------------------------------------------+
    |         TCP / QUIC / UDP                            |
    +-----------------------------------------------------+
 
-                    Figure 1: ATP in the Protocol Stack
+                    Figure 1: AGTP in the Protocol Stack
 
-   ATP is not a replacement for messaging protocols.  Agents using MCP
-   or A2A route those messages over ATP and gain transport-level
+   AGTP is not a replacement for messaging protocols.  Agents using MCP
+   or A2A route those messages over AGTP and gain transport-level
    observability and identity without modifying the messaging layer.
-   ATP-native agents that do not use a separate messaging protocol
-   interact with ATP methods directly.
+   AGTP-native agents that do not use a separate messaging protocol
+   interact with AGTP methods directly.
 
 5.  Protocol Overview
 
 5.1.  Stack Position
 
-   ATP is an application-layer protocol.  It operates above the
+   AGTP is an application-layer protocol.  It operates above the
    transport layer (TCP, UDP, or QUIC) and is wrapped by TLS.  It sits
    below any agent messaging protocol in deployments that use one.
 
@@ -559,7 +559,7 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 10]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
    *  *SHOULD* prefer QUIC [RFC9000] [RFC9001] for new deployments
@@ -572,12 +572,12 @@ Internet-Draft                     ATP                        March 2026
    *  *MAY* run over UDP where QUIC is not available, subject to
       implementor-defined reliability guarantees.
 
-   Suggested port assignment (subject to IANA assignment — see
+   Suggested port assignment (subject to IANA assignment.  See
    Section 8):
 
-   *  ATP/QUIC: port 8443 (proposed)
+   *  AGTP/QUIC: port 8443 (proposed)
 
-   *  ATP/TCP+TLS: port 8080 (proposed)
+   *  AGTP/TCP+TLS: port 8080 (proposed)
 
 5.2.  Design Principles
 
@@ -593,15 +593,15 @@ Internet-Draft                     ATP                        March 2026
    Agent-native:  Every design decision assumes the initiating party is
       an AI system, not a human.
 
-   Secure by default:  TLS 1.3 or higher is mandatory.  Unencrypted ATP
+   Secure by default:  TLS 1.3 or higher is mandatory.  Unencrypted AGTP
       connections *MUST* be rejected.  Agent identity headers are
       present on every request.
 
-   Observable by design:  Native metadata in every ATP header provides
+   Observable by design:  Native metadata in every AGTP header provides
       the minimum information needed for routing, monitoring, and audit
       without application-layer instrumentation.
 
-   Composable:  ATP works alongside existing agent messaging protocols
+   Composable:  AGTP works alongside existing agent messaging protocols
       without requiring modification to those protocols.
 
 
@@ -615,14 +615,14 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 11]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
 5.3.  Connection Model
 
-   ATP uses a persistent session model by default, reflecting the
+   AGTP uses a persistent session model by default, reflecting the
    reality that agents typically execute multi-step workflows rather
-   than isolated single requests.  An ATP session is established with a
+   than isolated single requests.  An AGTP session is established with a
    single TLS handshake including agent identity assertion, persists
    across multiple method exchanges, carries a Session-ID header
    identifying the agent's task context, and terminates on explicit
@@ -637,58 +637,58 @@ Internet-Draft                     ATP                        March 2026
 
 5.4.1.  Request Headers
 
-   +==================+==========+=====================================+
-   | Field            | Required | Description                         |
-   +==================+==========+=====================================+
-   | ATP-Version      | *MUST*   | Protocol version.  Current:         |
-   |                  |          | ATP/1.0                             |
-   +------------------+----------+-------------------------------------+
-   | ATP-Method       | *MUST*   | The agent intent method (see        |
-   |                  |          | Section 6)                          |
-   +------------------+----------+-------------------------------------+
-   | Agent-ID         | *MUST*   | Opaque identifier for the           |
-   |                  |          | requesting agent instance           |
-   +------------------+----------+-------------------------------------+
-   | Principal-ID     | *MUST*   | Identifier of the human or system   |
-   |                  |          | that authorized this agent          |
-   +------------------+----------+-------------------------------------+
-   | Authority-Scope  | *MUST*   | Declared scope of actions this      |
-   |                  |          | agent is authorized to take         |
-   +------------------+----------+-------------------------------------+
-   | Session-ID       | *SHOULD* | Identifies the current task/        |
-   |                  |          | workflow context                    |
-   +------------------+----------+-------------------------------------+
-   | Task-ID          | *SHOULD* | Unique identifier for this          |
-   |                  |          | specific method invocation          |
-   +------------------+----------+-------------------------------------+
-   | Delegation-Chain | *MAY*    | Ordered list of Agent-IDs if this   |
-   |                  |          | request was delegated               |
-   +------------------+----------+-------------------------------------+
-   | Priority         | *MAY*    | Request priority hint: critical,    |
-   |                  |          | normal, background                  |
+    +==================+==========+===================================+
+    | Field            | Required | Description                       |
+    +==================+==========+===================================+
+    | AGTP-Version     | *MUST*   | Protocol version.  Current:       |
+    |                  |          | AGTP/1.0                          |
+    +------------------+----------+-----------------------------------+
+    | AGTP-Method      | *MUST*   | The agent intent method (see      |
+    |                  |          | Section 6)                        |
+    +------------------+----------+-----------------------------------+
+    | Agent-ID         | *MUST*   | Opaque identifier for the         |
+    |                  |          | requesting agent instance         |
+    +------------------+----------+-----------------------------------+
+    | Principal-ID     | *MUST*   | Identifier of the human or system |
+    |                  |          | that authorized this agent        |
+    +------------------+----------+-----------------------------------+
+    | Authority-Scope  | *MUST*   | Declared scope of actions this    |
+    |                  |          | agent is authorized to take       |
+    +------------------+----------+-----------------------------------+
+    | Session-ID       | *SHOULD* | Identifies the current task/      |
+    |                  |          | workflow context                  |
+    +------------------+----------+-----------------------------------+
+    | Task-ID          | *SHOULD* | Unique identifier for this        |
+    |                  |          | specific method invocation        |
+    +------------------+----------+-----------------------------------+
+    | Delegation-Chain | *MAY*    | Ordered list of Agent-IDs if this |
+    |                  |          | request was delegated             |
+    +------------------+----------+-----------------------------------+
+    | Priority         | *MAY*    | Request priority hint: critical,  |
+    |                  |          | normal, background                |
 
 
 
 Hood                    Expires 20 September 2026              [Page 12]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
-   +------------------+----------+-------------------------------------+
-   | TTL              | *MAY*    | Maximum acceptable response         |
-   |                  |          | latency in milliseconds             |
-   +------------------+----------+-------------------------------------+
+    +------------------+----------+-----------------------------------+
+    | TTL              | *MAY*    | Maximum acceptable response       |
+    |                  |          | latency in milliseconds           |
+    +------------------+----------+-----------------------------------+
 
-                     Table 2: ATP Request Header Fields
+                    Table 2: AGTP Request Header Fields
 
 5.4.2.  Response Headers
 
      +====================+=============+============================+
      | Field              | Required    | Description                |
      +====================+=============+============================+
-     | ATP-Version        | *MUST*      | Protocol version           |
+     | AGTP-Version       | *MUST*      | Protocol version           |
      +--------------------+-------------+----------------------------+
-     | ATP-Status         | *MUST*      | Numeric status code (see   |
+     | AGTP-Status        | *MUST*      | Numeric status code (see   |
      |                    |             | Section 5.5)               |
      +--------------------+-------------+----------------------------+
      | Task-ID            | *MUST*      | Echo of request Task-ID    |
@@ -704,18 +704,18 @@ Internet-Draft                     ATP                        March 2026
      |                    |             | additional results in      |
      |                    |             | streaming contexts         |
      +--------------------+-------------+----------------------------+
-     | Supported-Methods  | *SHOULD*    | List of ATP methods        |
+     | Supported-Methods  | *SHOULD*    | List of AGTP methods       |
      |                    | (on session | supported by this server   |
      |                    | open)       |                            |
      +--------------------+-------------+----------------------------+
 
-                    Table 3: ATP Response Header Fields
+                    Table 3: AGTP Response Header Fields
 
 5.5.  Status Codes
 
-   ATP defines its own status code space.  Codes 451, 550, and 551 are
-   ATP-specific with no HTTP equivalent and are registered in the IANA
-   ATP Status Code Registry (see Section 8.3).
+   AGTP defines its own status code space.  Codes 451, 550, and 551 are
+   AGTP-specific with no HTTP equivalent and are registered in the IANA
+   AGTP Status Code Registry (see Section 8.3).
 
 
 
@@ -727,7 +727,7 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 13]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
    +======+===============+============================================+
@@ -740,7 +740,7 @@ Internet-Draft                     ATP                        March 2026
    +------+---------------+--------------------------------------------+
    | 204  | No Content    | Method executed; no response body          |
    +------+---------------+--------------------------------------------+
-   | 400  | Bad Request   | Malformed ATP request                      |
+   | 400  | Bad Request   | Malformed AGTP request                     |
    +------+---------------+--------------------------------------------+
    | 401  | Unauthorized  | Agent-ID not recognized or not             |
    |      |               | authenticated                              |
@@ -762,7 +762,7 @@ Internet-Draft                     ATP                        March 2026
    |      |               | frequency                                  |
    +------+---------------+--------------------------------------------+
    | 451  | Scope         | Requested action is outside declared       |
-   |      | Violation     | Authority-Scope — ATP-specific             |
+   |      | Violation     | Authority-Scope.  AGTP-specific            |
    +------+---------------+--------------------------------------------+
    | 500  | Server Error  | Internal failure in the responding system  |
    +------+---------------+--------------------------------------------+
@@ -770,20 +770,20 @@ Internet-Draft                     ATP                        March 2026
    |      |               | unavailable                                |
    +------+---------------+--------------------------------------------+
    | 550  | Delegation    | A delegated sub-agent failed to complete   |
-   |      | Failure       | the requested action — ATP-specific        |
+   |      | Failure       | the requested action.  AGTP-specific       |
    +------+---------------+--------------------------------------------+
    | 551  | Authority     | Delegation chain contains an unverifiable  |
-   |      | Chain Broken  | or broken identity link — ATP-specific     |
+   |      | Chain Broken  | or broken identity link.  AGTP-specific    |
    +------+---------------+--------------------------------------------+
 
-                         Table 4: ATP Status Codes
+                         Table 4: AGTP Status Codes
 
 
 
 
 Hood                    Expires 20 September 2026              [Page 14]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
    Status code 451 (Scope Violation) is a governance signal: the agent
@@ -796,18 +796,18 @@ Internet-Draft                     ATP                        March 2026
 
 5.6.  Wire Format and Content-Type
 
-   ATP request and response bodies are encoded as JSON.  The registered
-   Content-Type for ATP message bodies is:
+   AGTP request and response bodies are encoded as JSON.  The registered
+   Content-Type for AGTP message bodies is:
 
-   Content-Type: application/atp+json
+   Content-Type: application/agtp+json
 
-   Implementations *MUST* include this Content-Type on all ATP requests
+   Implementations *MUST* include this Content-Type on all AGTP requests
    and responses that carry a message body.  Responses with no body
    (e.g., 204 No Content) *MUST NOT* include a Content-Type header.
    Binary or streaming extensions *MAY* define additional Content-Type
    values as part of their companion specifications.
 
-   The common structure for all ATP request bodies:
+   The common structure for all AGTP request bodies:
 
    {
      "method": "QUERY",
@@ -817,7 +817,7 @@ Internet-Draft                     ATP                        March 2026
      "context": { }
    }
 
-   And for all ATP response bodies:
+   And for all AGTP response bodies:
 
    {
      "status": 200,
@@ -828,10 +828,10 @@ Internet-Draft                     ATP                        March 2026
 
 5.7.  Early Implementations
 
-   ATP is a proposed specification.  No production implementations exist
-   at the time of this writing.  The author encourages early prototype
-   implementations to validate the protocol design, identify gaps, and
-   generate feedback prior to IETF working group submission.
+   AGTP is a proposed specification.  No production implementations
+   exist at the time of this writing.  The author encourages early
+   prototype implementations to validate the protocol design, identify
+   gaps, and generate feedback prior to IETF working group submission.
 
 
 
@@ -839,10 +839,10 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 15]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
-      If you are building an ATP prototype or reference implementation,
+      If you are building an AGTP prototype or reference implementation,
       please share your findings via the feedback channel listed on the
       cover of this document.  A reference implementation in Python and/
       or Go is planned as open-source software concurrent with or
@@ -850,43 +850,43 @@ Internet-Draft                     ATP                        March 2026
       welcome and will be incorporated into subsequent draft revisions.
 
    Implementers wishing to experiment before the formal IANA port
-   assignment may use port 8443 (ATP/QUIC) and port 8080 (ATP/TCP+TLS)
+   assignment may use port 8443 (AGTP/QUIC) and port 8080 (AGTP/TCP+TLS)
    as working values.  These values are subject to change upon final
    IANA assignment.
 
    The ACTIVATE method extension, which binds .nomo governed agent
-   packages to ATP as a first-class activation operation, is described
+   packages to AGTP as a first-class activation operation, is described
    in a companion document and is implemented as an optional extension.
-   Core ATP implementations need not support ACTIVATE to be compliant
+   Core AGTP implementations need not support ACTIVATE to be compliant
    with this specification.
 
 5.8.  Agent Identification and Naming
 
 5.8.1.  The Canonical Agent Identifier
 
-   Every ATP agent is identified by a canonical Agent-ID: a 256-bit
+   Every AGTP agent is identified by a canonical Agent-ID: a 256-bit
    cryptographic identifier derived from the agent's governance-layer
    Birth Certificate at activation time.  This identifier is globally
-   unique, fixed-length, and — when the Agent Certificate extension is
-   deployed — cryptographically verifiable at the transport layer.
+   unique, fixed-length, and, when the Agent Certificate extension is
+   deployed, cryptographically verifiable at the transport layer.
 
-   The URI form of a canonical Agent-ID uses the atp:// scheme:
+   The URI form of a canonical Agent-ID uses the agtp:// scheme:
 
-   atp://3a9f2c1d8b7e4a6f0c2d5e9b1a3f7c0d4e8b2a5f9c3d7e1b0a4f8c2d6e0b
+   agtp://3a9f2c1d8b7e4a6f0c2d5e9b1a3f7c0d4e8b2a5f9c3d7e1b0a4f8c2d6e0b
 
-   URI length is not a practical constraint for atp:// identifiers.
+   URI length is not a practical constraint for agtp:// identifiers.
    256-character URIs are handled without issue by all modern protocol
    stacks and do not require abbreviation or truncation.
 
-   The atp:// URI scheme is proposed for IANA registration per [RFC7595]
-   as an open, unencumbered scheme.  This registration is distinct from
-   and independent of any intellectual property claims on ATP
-   extensions.
+   The agtp:// URI scheme is proposed for IANA registration per
+   [RFC7595] as an open, unencumbered scheme.  This registration is
+   distinct from and independent of any intellectual property claims on
+   AGTP extensions.
 
-   The canonical Agent-ID is the authoritative identifier in all ATP
+   The canonical Agent-ID is the authoritative identifier in all AGTP
    protocol operations: it appears in the Agent-ID header of every
    request, is the key in the certificate registry, and is the cross-
-   layer reference linking the ATP Agent Certificate to the governance-
+   layer reference linking the AGTP Agent Certificate to the governance-
    layer Birth Certificate.  All other identification forms described in
    this section are aliases that resolve to a canonical Agent-ID.
 
@@ -895,24 +895,24 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 16]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
 5.8.2.  Human-Friendly Agent Names (Optional Layer)
 
-   For deployments with large numbers of agents — particularly
-   enterprise environments with hundreds or thousands of agents per
-   organization — the canonical Agent-ID alone is insufficient for
-   human-readable observability, audit navigation, and operational
-   management.  ATP supports an optional hierarchical naming layer as a
-   convenience alias system on top of canonical identifiers.
+   For deployments with large numbers of agents, particularly enterprise
+   environments with hundreds or thousands of agents per organization,
+   the canonical Agent-ID alone is insufficient for human-readable
+   observability, audit navigation, and operational management.  AGTP
+   supports an optional hierarchical naming layer as a convenience alias
+   system on top of canonical identifiers.
 
    Human-friendly names follow a structured DNS-style format using the
    .agent or .nomo top-level labels:
 
-   atp://marketing-01.acme.agent
-   atp://sales-bot-v2.engineering.acme.agent
-   atp://customer-experience.acme.nomo
+   agtp://marketing-01.acme.agent
+   agtp://sales-bot-v2.engineering.acme.agent
+   agtp://customer-experience.acme.nomo
 
    The structure is: [agent-label].[department].[organization].[tld]
 
@@ -927,14 +927,14 @@ Internet-Draft                     ATP                        March 2026
    namespace.
 
    Human-friendly names *MUST NOT* be used as Agent-ID header values in
-   ATP protocol messages.  The Agent-ID header always carries the
+   AGTP protocol messages.  The Agent-ID header always carries the
    canonical 256-bit identifier.  Friendly names are a resolution and
    management layer; they are not transport-layer identifiers.
 
 5.8.3.  Governed Name Registration
 
    Human-friendly name registration is tied to the governed activation
-   flow and ATP Agent Certificate issuance process.  An agent may only
+   flow and AGTP Agent Certificate issuance process.  An agent may only
    claim a friendly name after successfully completing the atomic
    activation protocol and receiving an Active lifecycle state in the
    certificate registry.
@@ -951,7 +951,7 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 17]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
    3.  On successful activation, the friendly name is recorded in the
@@ -975,13 +975,13 @@ Internet-Draft                     ATP                        March 2026
    DNS-based resolution:  The organization publishes DNS TXT records
       under the _agent subdomain of its governance zone domain:
 
-   _agent.acme.agent. IN TXT "atp-id=3a9f2c1d8b7e4a6f..."
+   _agent.acme.agent. IN TXT "agtp-id=3a9f2c1d8b7e4a6f..."
 
-   ATP-native resolution:  An ATP QUERY request to the governance
+   AGTP-native resolution:  An AGTP QUERY request to the governance
       platform's resolution endpoint resolves a friendly name to a
       canonical Agent-ID along with the agent's current lifecycle state,
-      governance zone, trust tier, and ATP Agent Certificate status.
-      Resolution responses carry Content-Type: application/atp+json:
+      governance zone, trust tier, and AGTP Agent Certificate status.
+      Resolution responses carry Content-Type: application/agtp+json:
 
    {
      "friendly_name": "sales-bot-v2.engineering.acme.agent",
@@ -994,7 +994,7 @@ Internet-Draft                     ATP                        March 2026
    }
 
    Implementations *MUST* treat the canonical Agent-ID as authoritative
-   in the event of a conflict between DNS-based and ATP-native
+   in the event of a conflict between DNS-based and AGTP-native
    resolution results.
 
 
@@ -1007,7 +1007,7 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 18]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
 5.8.5.  Scaling Considerations
@@ -1020,23 +1020,23 @@ Internet-Draft                     ATP                        March 2026
    indexed on (governance_zone, friendly_name) with a pointer to
    certificate_id, adding O(1) per-resolution overhead.
 
-5.8.6.  IANA Considerations for the atp:// URI Scheme
+5.8.6.  IANA Considerations for the agtp:// URI Scheme
 
-   This document proposes registration of the atp:// URI scheme with
+   This document proposes registration of the agtp:// URI scheme with
    IANA per [RFC7595].  Registration template:
 
-   URI scheme name:  atp
+   URI scheme name:  agtp
 
    Status:  Permanent
 
-   URI scheme syntax:  atp://[canonical-agent-id] or atp://[friendly-
+   URI scheme syntax:  agtp://[canonical-agent-id] or agtp://[friendly-
       name]
 
    URI scheme semantics:  Identifies an AI agent operating over the
       Agent Transfer Protocol.  The canonical form uses a 256-bit hex-
       encoded cryptographic identifier.  The friendly-name form uses a
       hierarchical DNS-style label resolvable to a canonical identifier
-      via DNS TXT records or ATP-native lookup.
+      via DNS TXT records or AGTP-native lookup.
 
    Applications/protocols that use this URI scheme:  Agent Transfer
       Protocol (this document)
@@ -1049,7 +1049,7 @@ Internet-Draft                     ATP                        March 2026
 
    References:  This document
 
-   The atp:// URI scheme registration is open and unencumbered.  No
+   The agtp:// URI scheme registration is open and unencumbered.  No
    intellectual property claims apply to the URI scheme itself.
 
 6.  Method Definitions
@@ -1063,12 +1063,12 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 19]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
 6.1.  Design Philosophy
 
-   ATP methods are intent verbs, not resource operations.  Each method
+   AGTP methods are intent verbs, not resource operations.  Each method
    expresses what an agent is trying to accomplish.  Method names are
    uppercase ASCII strings.  Methods that modify state are NOT
    idempotent by default unless explicitly marked.  All methods accept a
@@ -1119,7 +1119,7 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 20]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
 6.2.2.  SUMMARIZE
@@ -1175,7 +1175,7 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 21]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
    +=====================+=============+==============================+
@@ -1231,13 +1231,13 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 22]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
      +===============+================+==============================+
      | Parameter     | Required       | Description                  |
      +===============+================+==============================+
-     | steps         | *MUST*         | Ordered list of ATP method   |
+     | steps         | *MUST*         | Ordered list of AGTP method  |
      |               |                | calls with parameters        |
      +---------------+----------------+------------------------------+
      | trigger       | *MUST*         | immediate, datetime, event,  |
@@ -1261,7 +1261,7 @@ Internet-Draft                     ATP                        March 2026
 6.2.5.  LEARN
 
    Purpose: Update the agent's session context, knowledge state, or
-   persistent memory.  An explicit context write — the agent asserts
+   persistent memory.  An explicit context write where the agent asserts
    that something should be retained.
 
 
@@ -1287,7 +1287,7 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 23]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
    +============+==========+==========================================+
@@ -1318,7 +1318,7 @@ Internet-Draft                     ATP                        March 2026
 6.2.6.  DELEGATE
 
    Purpose: Transfer execution of a task or method to a sub-agent or
-   downstream system.  Initiates a new ATP session on behalf of the
+   downstream system.  Initiates a new AGTP session on behalf of the
    delegating agent, carrying forward authority lineage.
 
 
@@ -1343,7 +1343,7 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 24]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
        +==================+==========+=============================+
@@ -1352,17 +1352,17 @@ Internet-Draft                     ATP                        March 2026
        | target_agent_id  | *MUST*   | Identifier of the agent to  |
        |                  |          | delegate to                 |
        +------------------+----------+-----------------------------+
-       | task             | *MUST*   | ATP method call (or         |
+       | task             | *MUST*   | AGTP method call (or        |
        |                  |          | sequence) to execute        |
        +------------------+----------+-----------------------------+
        | authority_scope  | *MUST*   | Scope granted to sub-agent  |
-       |                  |          | — *MUST* be a strict subset |
+       |                  |          | *MUST* be a strict subset   |
        |                  |          | of delegating agent's scope |
        +------------------+----------+-----------------------------+
        | delegation_token | *MUST*   | Signed token proving        |
        |                  |          | delegation authority        |
        +------------------+----------+-----------------------------+
-       | callback         | *SHOULD* | ATP endpoint for result     |
+       | callback         | *SHOULD* | AGTP endpoint for result    |
        |                  |          | delivery                    |
        +------------------+----------+-----------------------------+
        | deadline         | *MAY*    | Maximum time for task       |
@@ -1399,7 +1399,7 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 25]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
        +====================+==========+==========================+
@@ -1427,7 +1427,7 @@ Internet-Draft                     ATP                        March 2026
                      Table 11: COLLABORATE Parameters
 
    Response: Collaboration session receipt with collaboration_id.  Each
-   collaborator receives an ATP NOTIFY to join.  Idempotent: No.
+   collaborator receives an AGTP NOTIFY to join.  Idempotent: No.
 
 6.2.8.  CONFIRM
 
@@ -1455,7 +1455,7 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 26]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
     +=============+==============+===================================+
@@ -1484,7 +1484,7 @@ Internet-Draft                     ATP                        March 2026
    Purpose: Route a task, decision, or exception to a human principal or
    higher-authority agent when the current agent cannot or should not
    proceed.  ESCALATE is the protocol-level expression of meaningful
-   friction in AI systems — a first-class method, not a failure code.
+   friction in AI systems as a first-class method.
 
 
 
@@ -1511,7 +1511,7 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 27]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
       +===========+==========+======================================+
@@ -1542,7 +1542,7 @@ Internet-Draft                     ATP                        March 2026
    Response: Escalation receipt with escalation_id and routing
    confirmation.  The escalated task is paused until resolved via
    CONFIRM.  Idempotent: Yes. An agent that escalates appropriately is
-   functioning correctly.  Governance frameworks built on ATP can use
+   functioning correctly.  Governance frameworks built on AGTP can use
    escalation frequency and reason codes as observability signals for
    systemic issues.
 
@@ -1567,7 +1567,7 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 28]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
      +====================+==========+==============================+
@@ -1623,7 +1623,7 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 29]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
    |             | sub-agent   |                 |            |551    |
@@ -1643,14 +1643,14 @@ Internet-Draft                     ATP                        March 2026
    |             | information |                 |            |404    |
    +-------------+-------------+-----------------+------------+-------+
 
-                    Table 15: ATP Core Method Summary
+                    Table 15: AGTP Core Method Summary
 
 6.4.  Method Registry and Extensibility
 
-   ATP defines a formal Method Registry maintained by IANA (see
+   AGTP defines a formal Method Registry maintained by IANA (see
    Section 8.2).  Any party may submit a new method for registration.
    The registration procedure is Expert Review, and registration *MUST*
-   be accompanied by a published specification — at minimum an IETF
+   be accompanied by a published specification, at minimum an IETF
    Internet-Draft or equivalent publicly available document.  Registered
    methods *MUST*:
 
@@ -1679,7 +1679,7 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 30]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
    Capability negotiation occurs during session establishment.  The
@@ -1691,27 +1691,27 @@ Internet-Draft                     ATP                        March 2026
 
 6.5.1.  Three-Tier Method Architecture
 
-   The ATP method vocabulary is organized into three tiers reflecting
+   The AGTP method vocabulary is organized into three tiers reflecting
    different levels of universality, specificity, and domain relevance.
 
-   Tier 1 — Core Methods (defined in Section 6.2):  The baseline
-      vocabulary required for ATP compliance.  Every conformant ATP
+   Tier 1.  Core Methods (defined in Section 6.2):  The baseline
+      vocabulary required for AGTP compliance.  Every conformant AGTP
       implementation *MUST* support all Tier 1 methods.
 
-   Tier 2 — Standard Extended Methods:  Registered in the IANA ATP
-      Method Registry and available for use in any ATP implementation.
+   Tier 2.  Standard Extended Methods:  Registered in the IANA AGTP
+      Method Registry and available for use in any AGTP implementation.
       Not required for baseline compliance but *SHOULD* be implemented
-      where their semantics apply.  Defined in [ATP-METHODS].
+      where their semantics apply.  Defined in [AGTP-METHODS].
 
-   Tier 3 — Industry Profile Methods:  Domain-specific method sets
-      defined and registered by industry communities as named ATP
+   Tier 3.  Industry Profile Methods:  Domain-specific method sets
+      defined and registered by industry communities as named AGTP
       profiles.  Valid within deployments that declare support for the
       relevant profile.  Not required in general-purpose
       implementations.
 
 6.5.2.  Method Category Taxonomy
 
-   All ATP methods are organized into five categories:
+   All AGTP methods are organized into five categories:
 
    ACQUIRE:  Retrieve data, resources, or state without modifying it.
       Typically idempotent; no state modification.
@@ -1735,7 +1735,7 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 31]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
                        +=============+=============+
@@ -1768,7 +1768,7 @@ Internet-Draft                     ATP                        March 2026
 6.5.3.  Standard Extended Methods (Tier 2)
 
    The following methods constitute the initial Tier 2 registration set,
-   defined in [ATP-METHODS].  Listed here by category with brief
+   defined in [AGTP-METHODS].  Listed here by category with brief
    semantic definitions; full parameter specifications are in the
    companion document.
 
@@ -1791,7 +1791,7 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 32]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
    Notable constraints: PURCHASE *MUST* carry explicit principal_id and
@@ -1802,8 +1802,8 @@ Internet-Draft                     ATP                        March 2026
 
 6.5.4.  Short-Form and Industry-Inspired Methods
 
-   A set of short-form verb methods — SET, TAKE, OPEN, START, CALL,
-   MAKE, TURN, BREAK — are provisionally catalogued as candidates for
+   A set of short-form verb methods, e.g., SET, TAKE, OPEN, START, CALL,
+   MAKE, TURN, BREAK, are provisionally catalogued as candidates for
    Tier 2 registration.  These verbs are highly context-dependent and
    their semantics vary significantly across deployment domains.
 
@@ -1815,14 +1815,14 @@ Internet-Draft                     ATP                        March 2026
 
 6.5.5.  Industry Profile Method Sets
 
-   ATP recognizes that specific industries require method vocabularies
+   AGTP recognizes that specific industries require method vocabularies
    reflecting domain-specific operations that would be inappropriate in
    a general-purpose standard.  Industry profile method sets are defined
-   and registered as named ATP profiles.  A profile is a published
+   and registered as named AGTP profiles.  A profile is a published
    companion specification that:
 
-   1.  Declares a profile name (e.g., atp-profile-healthcare, atp-
-       profile-financial, atp-profile-legaltech)
+   1.  Declares a profile name (e.g., agtp-profile-healthcare, agtp-
+       profile-financial, agtp-profile-legaltech)
 
    2.  Defines one or more industry-specific methods with full parameter
        specifications, error codes, and security considerations
@@ -1847,7 +1847,7 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 33]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
    Legal and compliance: ATTEST, NOTARIZE, DISCLOSE, REDLINE, EXECUTE,
@@ -1856,7 +1856,7 @@ Internet-Draft                     ATP                        March 2026
    Infrastructure: PROVISION, DEPROVISION, ROLLBACK, SNAPSHOT, FAILOVER
 
    Industry communities are encouraged to develop and submit profile
-   specifications through the IETF process.  The IANA ATP Method
+   specifications through the IETF process.  The IANA AGTP Method
    Registry will maintain a profile index alongside the core and
    standard method registries.
 
@@ -1869,7 +1869,7 @@ Internet-Draft                     ATP                        March 2026
 
    For Industry Profile Methods:  Submit a profile specification to the
       IETF (or a recognized domain standards body with an established
-      ATP registry liaison) covering all methods in the profile and
+      AGTP registry liaison) covering all methods in the profile and
       profile compliance requirements.
 
    For Experimental Methods:  Use the X- prefix without registration.
@@ -1877,18 +1877,18 @@ Internet-Draft                     ATP                        March 2026
       production without completing the registration process.
       Experimental method names do not reserve the unprefixed name.
 
-   The ATP Method Registry is published at:
-   https://www.iana.org/assignments/atp-methods/
+   The AGTP Method Registry is published at:
+   https://www.iana.org/assignments/agtp-methods/
 
 7.  Security Considerations
 
    This section satisfies the mandatory IETF Security Considerations
-   requirement.  All ATP implementations *MUST* address the
+   requirement.  All AGTP implementations *MUST* address the
    considerations described here.
 
 7.1.  Mandatory TLS
 
-   All ATP connections *MUST* use TLS 1.3 or higher.  Implementations
+   All AGTP connections *MUST* use TLS 1.3 or higher.  Implementations
    *MUST* reject connections using TLS 1.2 or below.  Certificate
    validation follows standard PKI practices per [RFC5280].  Servers
    *MUST* present a valid certificate.
@@ -1903,21 +1903,21 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 34]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
 7.2.  Agent Identity Headers and Agent Certificate Extension
 
-   Every ATP request *MUST* include Agent-ID and Principal-ID header
+   Every AGTP request *MUST* include Agent-ID and Principal-ID header
    fields.  In the base specification, these fields are not
-   cryptographically authenticated — they are self-asserted but logged
+   cryptographically authenticated.  They are self-asserted but logged
    mandatorily for auditability.  Implementations *SHOULD* use logging
    and anomaly detection to identify inconsistencies.
 
    Full cryptographic verification of agent identity and Authority-Scope
-   is provided by the ATP Agent Certificate extension [ATP-CERT].  That
-   extension binds Agent-ID, Principal-ID, and Authority-Scope to an
-   X.509 v3 certificate presented during TLS mutual authentication,
+   is provided by the AGTP Agent Certificate extension [AGTP-CERT].
+   That extension binds Agent-ID, Principal-ID, and Authority-Scope to
+   an X.509 v3 certificate presented during TLS mutual authentication,
    enabling infrastructure-layer identity and scope verification without
    application-layer access.  Implementers planning deployments that
    require verified agent identity *SHOULD* plan for the Agent
@@ -1928,20 +1928,20 @@ Internet-Draft                     ATP                        March 2026
       preceding the Abstract for details.  The licensor is prepared to
       grant a royalty-free license to implementers.
 
-   Every ATP server *MUST* log Agent-ID and Principal-ID fields for
+   Every AGTP server *MUST* log Agent-ID and Principal-ID fields for
    every request, creating an attributable audit trail even in
    deployments without the Certificate extension.
 
 7.3.  Authority Scope Enforcement
 
    The Authority-Scope header declares what actions the agent is
-   authorized to take.  Compliant ATP servers *MUST* parse the
+   authorized to take.  Compliant AGTP servers *MUST* parse the
    Authority-Scope on every request, return 451 Scope Violation for any
    method that exceeds declared scope, and log all scope violations for
    audit purposes.  Scope declarations are self-asserted in the base
    spec, analogous to scope assertions in OAuth 2.0 [RFC6749].
    Cryptographically signed and infrastructure-enforced scopes are
-   defined in [ATP-CERT].
+   defined in [AGTP-CERT].
 
 7.4.  Threat Model
 
@@ -1949,7 +1949,7 @@ Internet-Draft                     ATP                        March 2026
 
    Threat: A malicious actor forges Agent-ID and Principal-ID headers to
    impersonate a trusted agent.  Base spec mitigation: mandatory logging
-   and anomaly detection.  Full mitigation requires [ATP-CERT].
+   and anomaly detection.  Full mitigation requires [AGTP-CERT].
 
 
 
@@ -1959,7 +1959,7 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 35]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
 7.4.2.  Authority Laundering
@@ -1974,15 +1974,15 @@ Internet-Draft                     ATP                        March 2026
    Threat: A malicious agent inserts itself into a DELEGATE chain.
    Mitigation: Delegation-Chain headers are logged at each hop. 551
    Authority Chain Broken is returned if any chain entry is
-   unverifiable.  Full mitigation requires [ATP-CERT] for signed
+   unverifiable.  Full mitigation requires [AGTP-CERT] for signed
    delegation tokens.
 
 7.4.4.  Denial of Service via High-Frequency Agent Traffic
 
-   Threat: Agents — compromised, misconfigured, or adversarial —
+   Threat: Agents that are compromised, misconfigured, or adversarial,
    generate extremely high request volumes.  Mitigation: 429 Rate
    Limited status code.  Rate limiting *SHOULD* be applied per Agent-ID
-   and per Principal-ID.  When [ATP-CERT] is deployed, per-Agent-ID
+   and per Principal-ID.  When [AGTP-CERT] is deployed, per-Agent-ID
    quotas can be cryptographically tied to verified identity, preventing
    quota evasion through Agent-ID spoofing.
 
@@ -2015,38 +2015,38 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 36]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
    *  Session-ID and Task-ID reveal workflow patterns
 
    *  Delegation-Chain reveals multi-agent architecture
 
-   ATP logs containing these fields *MUST* be treated as sensitive
+   AGTP logs containing these fields *MUST* be treated as sensitive
    operational data.  Operators *MUST* implement appropriate access
    controls, retention limits, and data minimization practices
    consistent with applicable privacy regulations.
 
    Where privacy-preserving attribution is required, implementations
    *MAY* use pseudonymous Agent-IDs with a separate trusted resolution
-   service.  Under this model, the Agent-ID transmitted in ATP headers
-   is an opaque, unlinkable identifier; a trusted resolution service —
-   accessible only to authorized parties — maps the opaque identifier to
+   service.  Under this model, the Agent-ID transmitted in AGTP headers
+   is an opaque, unlinkable identifier; a trusted resolution service,
+   accessible only to authorized parties, maps the opaque identifier to
    the true agent identity for audit and accountability purposes.  The
    architecture for pseudonymous agent identity resolution is reserved
    for a future companion document.
 
 7.6.  Denial-of-Service Considerations
 
-   ATP's agent identity headers provide a mechanism for more precise
+   AGTP's agent identity headers provide a mechanism for more precise
    denial-of-service mitigation than is possible with HTTP.  Rate
    limiting *SHOULD* be applied per Agent-ID and per Principal-ID in
    addition to per-IP-address controls.
 
-   When [ATP-CERT] is deployed, per-Agent-ID rate limiting can be
+   When [AGTP-CERT] is deployed, per-Agent-ID rate limiting can be
    cryptographically tied to verified agent identity, preventing quota
    evasion through Agent-ID rotation.  Implementations planning high-
-   volume governed agent deployments *SHOULD* plan for [ATP-CERT] as
+   volume governed agent deployments *SHOULD* plan for [AGTP-CERT] as
    part of their denial-of-service mitigation strategy.
 
    Additional recommended mitigations: Priority header enforcement
@@ -2057,25 +2057,25 @@ Internet-Draft                     ATP                        March 2026
 
 7.7.  Intellectual Property Considerations
 
-   The core ATP specification — including all base methods, header
+   The core AGTP specification, including all base methods, header
    fields, status codes, connection model, and IANA registrations
-   defined in this document — is intended for open implementation
-   without royalty obligation.
+   defined in this document, is intended for open implementation without
+   royalty obligation.
 
    Certain extensions referenced in this document may be subject to
    pending patent applications by the author, specifically: the Agent
-   Certificate extension [ATP-CERT], which provides cryptographic
-   binding of agent identity and authority scope to ATP header fields;
+   Certificate extension [AGTP-CERT], which provides cryptographic
+   binding of agent identity and authority scope to AGTP header fields;
 
 
 
 Hood                    Expires 20 September 2026              [Page 37]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
-   and the ACTIVATE method, which provides ATP-native transmission and
-   activation of governed agent packages.  Implementers of the core ATP
+   and the ACTIVATE method, which provides AGTP-native transmission and
+   activation of governed agent packages.  Implementers of the core AGTP
    specification are not affected by any intellectual property claims on
    these extensions.
 
@@ -2100,16 +2100,16 @@ Internet-Draft                     ATP                        March 2026
         +==============+======+===========+=======================+
         | Service Name | Port | Transport | Description           |
         +==============+======+===========+=======================+
-        | atp          | TBD  | TCP       | Agent Transfer        |
+        | agtp         | TBD  | TCP       | Agent Transfer        |
         |              |      |           | Protocol over TCP/TLS |
         +--------------+------+-----------+-----------------------+
-        | atp-quic     | TBD  | UDP       | Agent Transfer        |
+        | agtp-quic    | TBD  | UDP       | Agent Transfer        |
         |              |      |           | Protocol over QUIC    |
         +--------------+------+-----------+-----------------------+
 
                     Table 17: Proposed Port Assignments
 
-8.2.  ATP Method Registry
+8.2.  AGTP Method Registry
 
    Establishment of a new IANA registry: Agent Transfer Protocol
    Methods.
@@ -2127,16 +2127,16 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 38]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
       additional requirement that each registration be accompanied by a
-      published specification — at minimum a publicly available
-      Internet-Draft or equivalent document.  The Designated Expert
-      *SHOULD* verify that the proposed method name is unique, the
-      reference specification is publicly accessible, and the method
-      definition includes the required fields (parameters, response
-      structure, idempotency, error codes, security considerations).
+      published specification, at minimum a publicly available Internet-
+      Draft or equivalent document.  The Designated Expert *SHOULD*
+      verify that the proposed method name is unique, the reference
+      specification is publicly accessible, and the method definition
+      includes the required fields (parameters, response structure,
+      idempotency, error codes, security considerations).
 
    Reference:  This document
 
@@ -2166,9 +2166,9 @@ Internet-Draft                     ATP                        March 2026
          | NOTIFY      | Permanent | This document, Section 6.2 |
          +-------------+-----------+----------------------------+
 
-              Table 18: Initial ATP Method Registry Entries
+              Table 18: Initial AGTP Method Registry Entries
 
-8.3.  ATP Status Code Registry
+8.3.  AGTP Status Code Registry
 
    Establishment of a new IANA registry: Agent Transfer Protocol Status
    Codes.
@@ -2183,11 +2183,11 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 39]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
-   The following ATP-specific status codes — those with no HTTP
-   equivalent — are registered with full definitions:
+   The following AGTP-specific status codes, those with no HTTP
+   equivalent, are registered with full definitions:
 
    +======+============+==================================+===========+
    | Code | Name       | Definition                       | Reference |
@@ -2222,11 +2222,11 @@ Internet-Draft                     ATP                        March 2026
    |      |            | event.                           |           |
    +------+------------+----------------------------------+-----------+
 
-              Table 19: ATP-Specific Status Code Definitions
+             Table 19: AGTP-Specific Status Code Definitions
 
 8.4.  Header Field Registry
 
-   ATP header fields are distinct from HTTP header fields and are
+   AGTP header fields are distinct from HTTP header fields and are
    registered in a new IANA registry: Agent Transfer Protocol Header
    Fields.
 
@@ -2239,22 +2239,23 @@ Internet-Draft                     ATP                        March 2026
 
 Hood                    Expires 20 September 2026              [Page 40]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
-   ATP does not reuse the HTTP Field Name Registry, as ATP header fields
-   have different semantics, applicability, and versioning constraints
-   from HTTP fields.  HTTP header fields are not automatically valid in
-   ATP, and ATP header fields are not valid HTTP fields.
+   AGTP does not reuse the HTTP Field Name Registry, as AGTP header
+   fields have different semantics, applicability, and versioning
+   constraints from HTTP fields.  HTTP header fields are not
+   automatically valid in AGTP, and AGTP header fields are not valid
+   HTTP fields.
 
-   Initial registrations (all Permanent): ATP-Version, ATP-Method, ATP-
-   Status, Agent-ID, Principal-ID, Authority-Scope, Session-ID, Task-ID,
-   Delegation-Chain, Priority, TTL, Server-Agent-ID, Attribution-Record,
-   Continuation-Token, Supported-Methods.
+   Initial registrations (all Permanent): AGTP-Version, AGTP-Method,
+   AGTP-Status, Agent-ID, Principal-ID, Authority-Scope, Session-ID,
+   Task-ID, Delegation-Chain, Priority, TTL, Server-Agent-ID,
+   Attribution-Record, Continuation-Token, Supported-Methods.
 
 8.5.  URI Scheme Registration
 
-   Registration of the atp:// URI scheme per [RFC7595], as described in
+   Registration of the agtp:// URI scheme per [RFC7595], as described in
    Section 5.8.6 of this document.
 
 9.  References
@@ -2286,17 +2287,21 @@ Internet-Draft                     ATP                        March 2026
               DOI 10.17487/RFC8179, May 2017,
               <https://www.rfc-editor.org/rfc/rfc8179>.
 
-   [RFC9000]  Iyengar, J., Ed. and M. Thomson, Ed., "QUIC: A UDP-Based
-              Multiplexed and Secure Transport", RFC 9000,
-              DOI 10.17487/RFC9000, May 2021,
-              <https://www.rfc-editor.org/rfc/rfc9000>.
+
+
+
 
 
 
 Hood                    Expires 20 September 2026              [Page 41]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
+
+   [RFC9000]  Iyengar, J., Ed. and M. Thomson, Ed., "QUIC: A UDP-Based
+              Multiplexed and Secure Transport", RFC 9000,
+              DOI 10.17487/RFC9000, May 2021,
+              <https://www.rfc-editor.org/rfc/rfc9000>.
 
    [RFC9001]  Thomson, M., Ed. and S. Turner, Ed., "Using TLS to Secure
               QUIC", RFC 9001, DOI 10.17487/RFC9001, May 2021,
@@ -2314,18 +2319,19 @@ Internet-Draft                     ATP                        March 2026
 
    [ACP]      IBM Research, "Agent Communication Protocol", 2025.
 
-   [ANP]      "Agent Network Protocol", 2025.
-
-   [ATP-CERT] Hood, C., "ATP Agent Certificate Extension", Work in
-              Progress, Internet-Draft, draft-hood-atp-agent-cert-00,
+   [AGTP-CERT]
+              Hood, C., "AGTP Agent Certificate Extension", Work in
+              Progress, Internet-Draft, draft-hood-agtp-agent-cert-00,
               2026, <https://datatracker.ietf.org/doc/html/draft-hood-
-              atp-agent-cert-00>.
+              agtp-agent-cert-00>.
 
-   [ATP-METHODS]
-              Hood, C., "ATP Standard Extended Method Vocabulary", Work
-              in Progress, Internet-Draft, draft-hood-atp-standard-
+   [AGTP-METHODS]
+              Hood, C., "AGTP Standard Extended Method Vocabulary", Work
+              in Progress, Internet-Draft, draft-hood-agtp-standard-
               methods-00, 2026, <https://datatracker.ietf.org/doc/html/
-              draft-hood-atp-standard-methods-00>.
+              draft-hood-agtp-standard-methods-00>.
+
+   [ANP]      "Agent Network Protocol", 2025.
 
    [MCP]      Anthropic, "Model Context Protocol", 2024,
               <https://modelcontextprotocol.io>.
@@ -2339,6 +2345,15 @@ Internet-Draft                     ATP                        March 2026
               DOI 10.17487/RFC7540, May 2015,
               <https://www.rfc-editor.org/rfc/rfc7540>.
 
+
+
+
+
+Hood                    Expires 20 September 2026              [Page 42]
+
+Internet-Draft                    AGTP                        March 2026
+
+
    [RFC7595]  Thaler, D., Ed., Hansen, T., and T. Hardie, "Guidelines
               and Registration Procedures for URI Schemes", BCP 35,
               RFC 7595, DOI 10.17487/RFC7595, June 2015,
@@ -2346,13 +2361,6 @@ Internet-Draft                     ATP                        March 2026
 
    [RFC9114]  Bishop, M., Ed., "HTTP/3", RFC 9114, DOI 10.17487/RFC9114,
               June 2022, <https://www.rfc-editor.org/rfc/rfc9114>.
-
-
-
-Hood                    Expires 20 September 2026              [Page 42]
-
-Internet-Draft                     ATP                        March 2026
-
 
 Appendix A.  Authority-Scope Format
 
@@ -2369,6 +2377,38 @@ Appendix A.  Authority-Scope Format
    Authority-Scope: booking:* payments:confirm
 
    Reserved domains (initial set):
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Hood                    Expires 20 September 2026              [Page 43]
+
+Internet-Draft                    AGTP                        March 2026
+
 
       +============+================================================+
       | Domain     | Description                                    |
@@ -2390,36 +2430,50 @@ Appendix A.  Authority-Scope Format
       | activation | Governed agent package activation (ACTIVATE    |
       |            | method extension)                              |
       +------------+------------------------------------------------+
-      | *          | All domains — requires explicit grant; use     |
-      |            | with caution                                   |
+      | *          | All domains require explicit grant; use with   |
+      |            | caution                                        |
       +------------+------------------------------------------------+
 
                  Table 20: Reserved Authority-Scope Domains
 
-Appendix B.  Example ATP Wire Formats
+Appendix B.  Example AGTP Wire Formats
 
    The following examples use a human-readable pseudo-wire format with
    HTTP-style headers followed by a JSON body.  The Content-Type for all
-   ATP message bodies is application/atp+json.
-
-
-
-
-Hood                    Expires 20 September 2026              [Page 43]
-
-Internet-Draft                     ATP                        March 2026
-
+   AGTP message bodies is application/agtp+json.
 
 B.1.  QUERY Request and Response
 
-   ATP/1.0 QUERY
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Hood                    Expires 20 September 2026              [Page 44]
+
+Internet-Draft                    AGTP                        March 2026
+
+
+   AGTP/1.0 QUERY
    Agent-ID: agt-7f3a9c2d
    Principal-ID: usr-chris-hood
    Authority-Scope: documents:query knowledge:query
    Session-ID: sess-a1b2c3d4
    Task-ID: task-0042
    TTL: 3000
-   Content-Type: application/atp+json
+   Content-Type: application/agtp+json
 
    {
      "task_id": "task-0042",
@@ -2432,17 +2486,17 @@ B.1.  QUERY Request and Response
      }
    }
 
-   ATP/1.0 200 OK
+   AGTP/1.0 200 OK
    Task-ID: task-0042
    Server-Agent-ID: srv-knowledge-01
    Attribution-Record: [signed attribution token]
-   Content-Type: application/atp+json
+   Content-Type: application/agtp+json
 
    {
      "status": 200,
      "task_id": "task-0042",
      "result": {
-       "results": [{"content": "...", "source": "doc-atp-research",
+       "results": [{"content": "...", "source": "doc-agtp-research",
                     "confidence": 0.91}],
        "result_count": 1
      }
@@ -2461,19 +2515,21 @@ B.2.  BOOK Request and Response
 
 
 
-Hood                    Expires 20 September 2026              [Page 44]
+
+
+Hood                    Expires 20 September 2026              [Page 45]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
-   ATP/1.0 BOOK
+   AGTP/1.0 BOOK
    Agent-ID: agt-travel-planner
    Principal-ID: usr-chris-hood
    Authority-Scope: booking:* calendar:book
    Session-ID: sess-trip-2026-04
    Task-ID: task-0107
    Priority: normal
-   Content-Type: application/atp+json
+   Content-Type: application/agtp+json
 
    {
      "method": "BOOK",
@@ -2487,10 +2543,10 @@ Internet-Draft                     ATP                        March 2026
      }
    }
 
-   ATP/1.0 200 OK
+   AGTP/1.0 200 OK
    Task-ID: task-0107
    Attribution-Record: [signed attribution token]
-   Content-Type: application/atp+json
+   Content-Type: application/agtp+json
 
    {
      "status": 200,
@@ -2517,19 +2573,19 @@ B.3.  ESCALATE Request and Response
 
 
 
-Hood                    Expires 20 September 2026              [Page 45]
+Hood                    Expires 20 September 2026              [Page 46]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
-   ATP/1.0 ESCALATE
+   AGTP/1.0 ESCALATE
    Agent-ID: agt-procurement-03
    Principal-ID: usr-finance-dept
    Authority-Scope: booking:* payments:confirm
    Session-ID: sess-procurement-q2
    Task-ID: task-0881
    Priority: urgent
-   Content-Type: application/atp+json
+   Content-Type: application/agtp+json
 
    {
      "method": "ESCALATE",
@@ -2548,10 +2604,10 @@ Internet-Draft                     ATP                        March 2026
      }
    }
 
-   ATP/1.0 202 Accepted
+   AGTP/1.0 202 Accepted
    Task-ID: task-0881
    Server-Agent-ID: srv-escalation-handler
-   Content-Type: application/atp+json
+   Content-Type: application/agtp+json
 
    {
      "status": 202,
@@ -2573,15 +2629,15 @@ Internet-Draft                     ATP                        March 2026
 
 
 
-Hood                    Expires 20 September 2026              [Page 46]
+Hood                    Expires 20 September 2026              [Page 47]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
 Appendix C.  Comparison Table
 
    +==============+================+=======+======+===================+
-   |Criterion     | ATP            |HTTP/  |gRPC  | A2A / MCP         |
+   |Criterion     | AGTP           |HTTP/  |gRPC  | A2A / MCP         |
    |              |                |REST   |      |                   |
    +==============+================+=======+======+===================+
    |Agent-native  | Yes            |No     |No    | Partial           |
@@ -2623,22 +2679,22 @@ Appendix C.  Comparison Table
    |royalty-free  |                |       |      |                   |
    +--------------+----------------+-------+------+-------------------+
 
-              Table 21: ATP Compared to Existing Approaches
+              Table 21: AGTP Compared to Existing Approaches
 
 
 
 
 
-Hood                    Expires 20 September 2026              [Page 47]
+Hood                    Expires 20 September 2026              [Page 48]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
    HTTP's method registry (registered with IETF Review per [RFC9110]) is
    effectively frozen for new semantic methods because any new HTTP
    method must be backward-compatible with existing HTTP infrastructure
-   globally.  ATP's Expert Review + published spec procedure enables the
-   protocol to evolve its method vocabulary as the agent ecosystem
+   globally.  AGTP's Expert Review + published spec procedure enables
+   the protocol to evolve its method vocabulary as the agent ecosystem
    develops, without the backward-compatibility constraints of the HTTP
    method space.
 
@@ -2648,13 +2704,13 @@ Appendix D.  Glossary
       takes actions without continuous human supervision per
       transaction.
 
-   Agent Transfer Protocol (ATP):  The application-layer protocol
+   Agent Transfer Protocol (AGTP):  The application-layer protocol
       defined in this document, providing a dedicated transport
       environment for agent traffic.
 
    Agent-ID:  A unique identifier for a specific agent instance, present
-      in all ATP request headers.  In the base spec, self-asserted.
-      With [ATP-CERT], cryptographically bound to a verified identity.
+      in all AGTP request headers.  In the base spec, self-asserted.
+      With [AGTP-CERT], cryptographically bound to a verified identity.
 
    Attribution Record:  A signed, logged record of an agent action,
       sufficient for audit and compliance purposes.
@@ -2666,15 +2722,15 @@ Appendix D.  Glossary
    Delegation Chain:  An ordered record of Agent-IDs representing the
       sequence of delegations that led to the current request.
 
-   ESCALATE:  An ATP method representing an agent's intentional deferral
-      of a decision or action to a human principal or higher-authority
-      agent.  A first-class method, not a failure code.
+   ESCALATE:  An AGTP method representing an agent's intentional
+      deferral of a decision or action to a human principal or higher-
+      authority agent.  A first-class method, not a failure code.
 
-   Intent Verb:  An ATP method name expressing the agent's purpose, as
+   Intent Verb:  An AGTP method name expressing the agent's purpose, as
       distinguished from HTTP resource-operation verbs (GET, POST, PUT,
       DELETE).
 
-   Method Registry:  The IANA-maintained registry of valid ATP method
+   Method Registry:  The IANA-maintained registry of valid AGTP method
       names and their specifications.  Registration requires Expert
       Review and a published specification.
 
@@ -2685,26 +2741,26 @@ Appendix D.  Glossary
 
 
 
-Hood                    Expires 20 September 2026              [Page 48]
+Hood                    Expires 20 September 2026              [Page 49]
 
-Internet-Draft                     ATP                        March 2026
+Internet-Draft                    AGTP                        March 2026
 
 
-      agent operates, present in all ATP request headers.
+      agent operates, present in all AGTP request headers.
 
-   Scope-Enforcement Point (SEP):  An ATP-aware infrastructure component
-      — load balancer, gateway, proxy — that enforces Authority-Scope
-      compliance on ATP requests without application-layer access.
-      Requires [ATP-CERT].
+   Scope-Enforcement Point (SEP):  An AGTP-aware infrastructure
+      component, load balancer, gateway, proxy, that enforces Authority-
+      Scope compliance on AGTP requests without application-layer
+      access.  Requires [AGTP-CERT].
 
-   Scope Violation (451):  An ATP status code returned when an agent
+   Scope Violation (451):  An AGTP status code returned when an agent
       requests an action outside its declared Authority-Scope.  A
       governance signal, not a protocol error. *MUST* be logged.
 
-   Session:  An ATP persistent connection context shared across multiple
-      method invocations within a single agent workflow.
+   Session:  An AGTP persistent connection context shared across
+      multiple method invocations within a single agent workflow.
 
-   551 Authority Chain Broken:  An ATP status code returned when one or
+   551 Authority Chain Broken:  An AGTP status code returned when one or
       more entries in the Delegation-Chain header cannot be verified as
       part of a valid and continuous delegation sequence. *MUST* be
       logged.
@@ -2741,4 +2797,4 @@ Author's Address
 
 
 
-Hood                    Expires 20 September 2026              [Page 49]
+Hood                    Expires 20 September 2026              [Page 50]

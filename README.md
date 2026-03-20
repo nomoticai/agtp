@@ -1,12 +1,12 @@
-# Agent Transfer Protocol (ATP)
+# Agent Transfer Protocol (AGTP)
 
-**draft-hood-independent-atp-00** | Informational | Independent Submission
+**draft-hood-independent-agtp-00** | Informational | Independent Submission
 
 > A dedicated application-layer protocol for autonomous AI agent traffic.
 
 ---
 
-## What Is ATP?
+## What Is AGTP?
 
 HTTP was designed for humans. AI agents are not humans.
 
@@ -20,7 +20,7 @@ backward-compatibility constraints are decades deep, and
 infrastructure-level traffic differentiation is architecturally
 impossible within HTTP's design.
 
-ATP is the dedicated transport layer that AI agents need. It sits
+AGTP is the dedicated transport layer that AI agents need. It sits
 above TLS and below any agent messaging protocol (MCP, ACP, A2A),
 providing:
 
@@ -37,8 +37,8 @@ providing:
   from human traffic at the routing layer without application-layer
   parsing
 
-ATP does not replace MCP, ACP, or A2A. Those are messaging protocols —
-they define what agents say. ATP defines how agent traffic moves.
+AGTP does not replace MCP, ACP, or A2A. Those are messaging protocols —
+they define what agents say. AGTP defines how agent traffic moves.
 
 ---
 
@@ -46,13 +46,13 @@ they define what agents say. ATP defines how agent traffic moves.
 
 | Item | Status |
 |---|---|
-| Internet-Draft | `draft-hood-independent-atp-00` — active |
+| Internet-Draft | `draft-hood-independent-agtp-00` — active |
 | IETF submission | Pending |
 | Working group | Independent submission (no WG assigned yet) |
 | Reference implementation | Planned (Python / Go) — contributions welcome |
-| Companion specs | `draft-hood-atp-agent-cert-00` (pending), `draft-hood-atp-standard-methods-00` (pending) |
+| Companion specs | `draft-hood-agtp-agent-cert-00` (pending), `draft-hood-agtp-standard-methods-00` (pending) |
 
-This repository is the working home for the ATP specification.
+This repository is the working home for the AGTP specification.
 The I-D is under active development. Feedback, issues, and pull
 requests are welcome.
 
@@ -60,10 +60,10 @@ requests are welcome.
 
 ## Repository Contents
 ```
-draft-hood-independent-atp-00.md    kramdown-rfc source (edit this)
-draft-hood-independent-atp-00.xml   RFC XML v3 (generated)
-draft-hood-independent-atp-00.txt   Plain-text I-D (IETF submission format)
-draft-hood-independent-atp-00.html  Rendered HTML (human-readable)
+draft-hood-independent-agtp-00.md    kramdown-rfc source (edit this)
+draft-hood-independent-agtp-00.xml   RFC XML v3 (generated)
+draft-hood-independent-agtp-00.txt   Plain-text I-D (IETF submission format)
+draft-hood-independent-agtp-00.html  Rendered HTML (human-readable)
 ```
 
 ---
@@ -77,7 +77,7 @@ draft-hood-independent-atp-00.html  Rendered HTML (human-readable)
 +-----------------------------------------------------+
 |  Messaging Layer  (MCP / ACP / A2A)  [optional]     |
 +-----------------------------------------------------+
-|   ATP - Agent Transfer Protocol      [this spec]    |
+|   AGTP - Agent Transfer Protocol      [this spec]    |
 +-----------------------------------------------------+
 |            TLS 1.3+                  [mandatory]    |
 +-----------------------------------------------------+
@@ -106,20 +106,20 @@ MONITOR, RUN, and ~30 others) and Tier 3 industry profile methods
 (healthcare, financial services, legal, infrastructure) are defined
 in companion specifications.
 
-### Three Problems ATP Solves
+### Three Problems AGTP Solves
 
 **1. Undifferentiated agent traffic.** HTTP cannot distinguish agent
-requests from human requests at the infrastructure layer. ATP
+requests from human requests at the infrastructure layer. AGTP
 provides a dedicated protocol environment — agent traffic is
 identifiable at the routing layer without payload parsing.
 
 **2. Semantic mismatch.** HTTP's GET/POST/PUT/DELETE vocabulary was
-designed for resource manipulation, not purposeful action. ATP's
+designed for resource manipulation, not purposeful action. AGTP's
 intent-based methods express what an agent is trying to accomplish
 at the protocol level.
 
 **3. No protocol-level identity.** HTTP carries no native mechanism
-for agent identity, authority scope, or attribution. ATP embeds
+for agent identity, authority scope, or attribution. AGTP embeds
 Agent-ID, Principal-ID, and Authority-Scope on every request, with
 an optional cryptographic Agent Certificate extension for verified
 identity at the transport layer.
@@ -128,7 +128,7 @@ identity at the transport layer.
 
 ## Intellectual Property
 
-The **core ATP specification** — all base methods, header fields,
+The **core AGTP specification** — all base methods, header fields,
 status codes, and IANA registrations defined in this document — is
 open and royalty-free.
 
@@ -147,16 +147,16 @@ https://datatracker.ietf.org/ipr/
 ## Rebuilding the I-D
 
 If you are contributing to the specification text, edit
-`draft-hood-independent-atp-00.md` and rebuild:
+`draft-hood-independent-agtp-00.md` and rebuild:
 ```bash
 # Install toolchain (once)
 pip install xml2rfc
 gem install kramdown-rfc2629
 
 # Rebuild
-kramdown-rfc2629 draft-hood-independent-atp-00.md > draft-hood-independent-atp-00.xml
-xml2rfc draft-hood-independent-atp-00.xml --text
-xml2rfc draft-hood-independent-atp-00.xml --html
+kramdown-rfc2629 draft-hood-independent-agtp-00.md > draft-hood-independent-aftp-00.xml
+xml2rfc draft-hood-independent-agtp-00.xml --text
+xml2rfc draft-hood-independent-agtp-00.xml --html
 ```
 
 ---
@@ -170,7 +170,7 @@ group stage. All feedback is welcome:
   gaps in the specification
 - **Pull requests** — editorial improvements and clarifications to
   the spec text
-- **Implementation reports** — if you are building an ATP prototype,
+- **Implementation reports** — if you are building an AGTP prototype,
   please share your findings via an issue; implementation reports
   will be incorporated into subsequent draft revisions
 - **IETF discussion** — once submitted, discussion will move to the
