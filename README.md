@@ -1,6 +1,6 @@
 # Agent Transfer Protocol (AGTP)
 
-**draft-hood-independent-agtp-01** | Informational | Independent Submission
+**draft-hood-independent-agtp-03** | Informational | Independent Submission
 
 > A dedicated application-layer protocol for autonomous AI agent traffic.
 
@@ -25,8 +25,9 @@ above TLS and below any agent messaging protocol (MCP, ACP, A2A),
 providing:
 
 - **Agent-native intent methods** — QUERY, SUMMARIZE, BOOK, SCHEDULE,
-  LEARN, DELEGATE, COLLABORATE, CONFIRM, ESCALATE, NOTIFY — and a
-  growing extended vocabulary organized by category
+  LEARN, DELEGATE, COLLABORATE, CONFIRM, ESCALATE, NOTIFY, DESCRIBE,
+  SUSPEND, and PROPOSE — with a growing extended vocabulary organized
+  by semantic category
 - **Protocol-level agent identity** — Agent-ID, Principal-ID, and
   Authority-Scope on every request, with an optional cryptographic
   certificate extension for verified identity
@@ -36,6 +37,9 @@ providing:
 - **Infrastructure observability** — agent traffic is distinguishable
   from human traffic at the routing layer without application-layer
   parsing
+- **Dynamic endpoint negotiation** — PROPOSE method and grammar-based
+  validation pathway enabling agents to instantiate endpoints on demand
+  without pre-built API definitions
 
 AGTP does not replace MCP, ACP, or A2A. Those are messaging protocols —
 they define what agents say. AGTP defines how agent traffic moves.
@@ -46,24 +50,32 @@ they define what agents say. AGTP defines how agent traffic moves.
 
 | Item | Status |
 |---|---|
-| Internet-Draft | `draft-hood-independent-agtp-01` — active |
+| Internet-Draft | `draft-hood-independent-agtp-03` — active |
 | IETF submission | Submitted |
 | Working group | Independent submission (no WG assigned yet) |
 | Reference implementation | Planned (Python / Go) — contributions welcome |
-| Companion specs | `draft-hood-agtp-agent-cert-00` (pending), `draft-hood-agtp-standard-methods-00` (pending), `draft-hood-agtp-web3-bridge-00` (planned) |
+| Companion specs | See table below |
 
-This repository is the working home for the AGTP specification.
-The I-D is under active development. Feedback, issues, and pull
-requests are welcome.
+### Companion Specifications
+
+| Draft | Description |
+|---|---|
+| `draft-hood-independent-agis-01` | Agentic Grammar and Interface Specification — the native interface definition language for AGTP services |
+| `draft-hood-agtp-standard-methods-01` | Tier 2 extended method vocabulary |
+| `draft-hood-agtp-agent-cert-00` | X.509 agent certificate extension |
+| `draft-hood-agtp-composition-00` | Composition with MCP, A2A, ACP |
+| `draft-hood-agtp-discovery-00` | Agent discovery and name service |
+| `draft-hood-agtp-web3-bridge-00` | Web3 wallet identity bridge |
 
 ---
 
 ## Repository Contents
+
 ```
-draft-hood-independent-agtp-01.md    kramdown-rfc source (edit this)
-draft-hood-independent-agtp-01.xml   RFC XML v3 (generated)
-draft-hood-independent-agtp-01.txt   Plain-text I-D (IETF submission format)
-draft-hood-independent-agtp-01.html  Rendered HTML (human-readable)
+draft-hood-independent-agtp-03.md    kramdown-rfc source (edit this)
+draft-hood-independent-agtp-03.xml   RFC XML v3 (generated)
+draft-hood-independent-agtp-03.txt   Plain-text I-D (IETF submission format)
+draft-hood-independent-agtp-03.html  Rendered HTML (human-readable)
 ```
 
 ---
@@ -71,13 +83,16 @@ draft-hood-independent-agtp-01.html  Rendered HTML (human-readable)
 ## The Protocol at a Glance
 
 ### Stack Position
+
 ```
 +-----------------------------------------------------+
 |            Agent Application Logic                  |
 +-----------------------------------------------------+
 |  Messaging Layer  (MCP / ACP / A2A)  [optional]     |
 +-----------------------------------------------------+
-|   AGTP - Agent Transfer Protocol      [this spec]    |
+|   AGTP — Agent Transfer Protocol     [this spec]    |
++-----------------------------------------------------+
+|   AGIS — Interface Definition Layer  [companion]    |
 +-----------------------------------------------------+
 |            TLS 1.3+                  [mandatory]    |
 +-----------------------------------------------------+
@@ -85,7 +100,7 @@ draft-hood-independent-agtp-01.html  Rendered HTML (human-readable)
 +-----------------------------------------------------+
 ```
 
-### Core Methods
+### Core Methods (Tier 1)
 
 | Method | Category | Intent |
 |---|---|---|
@@ -99,12 +114,16 @@ draft-hood-independent-agtp-01.html  Rendered HTML (human-readable)
 | CONFIRM | Transact | Attest to a prior action |
 | ESCALATE | Orchestrate | Defer to human authority |
 | NOTIFY | Communicate | Push information |
+| DESCRIBE | Acquire | Retrieve endpoint capabilities |
+| SUSPEND | Orchestrate | Pause session workflow |
+| PROPOSE | Orchestrate | Submit dynamic endpoint proposal |
 
-A three-tier method vocabulary extends beyond the core ten:
-Tier 2 standard methods (FETCH, SEARCH, VALIDATE, TRANSFER,
-MONITOR, RUN, and ~30 others) and Tier 3 industry profile methods
-(healthcare, financial services, legal, infrastructure) are defined
-in companion specifications.
+A four-tier method vocabulary extends beyond the core thirteen: Tier 2
+standard methods (FETCH, SEARCH, VALIDATE, TRANSFER, MONITOR, RUN, and
+~30 others), Tier 3 industry profile methods (healthcare, financial
+services, legal, infrastructure), and Tier 4 AGIS-validated custom
+methods accepted at the transport layer via the Method-Grammar header
+without IANA registration.
 
 ### Three Problems AGTP Solves
 
@@ -126,7 +145,66 @@ identity at the transport layer.
 
 ---
 
-## New in v01: Agent Identity, URIs, and Registration
+## New in v03: AGIS Integration and Dynamic Endpoint Negotiation
+
+### AGIS — The Interface Definition Layer
+
+AGTP v03 introduces normative integration with the Agentic Grammar and
+Interface Specification (AGIS, `draft-hood-independent-agis-01`). AGIS
+is to AGTP what HTML is to HTTP — the native language that AGTP
+services use to describe themselves.
+
+An AGIS document served at an AGTP address describes all available
+methods, their semantic intent, input/output schemas, confidence
+thresholds, and data availability — in a grammar-constrained format
+that agents read through natural language inference. No API
+documentation required. No pre-training on specific endpoints.
+
+### Grammar-Based Method Validation
+
+The new `Method-Grammar: AGIS/1.0` header enables Tier 4 custom
+methods — organization-defined verbs accepted at the transport layer
+without IANA registration, provided they conform to AGIS grammar rules
+(imperative base-form, action-intent semantic class). This resolves the
+fundamental tension between a fixed method registry and the diversity
+of real-world agent deployments.
+
+```
+Method-Grammar: AGIS/1.0
+```
+
+Requests carrying this header are validated against AGIS grammar
+rules at the transport layer. Non-conformant methods return
+`454 Grammar Violation`.
+
+### Dynamic Endpoint Negotiation (PROPOSE)
+
+The new PROPOSE method enables agents to request endpoints that have
+never been pre-built. A service declares what data it holds in a
+Data Manifest block; an agent proposes the endpoint format it needs;
+the service instantiates it for the session.
+
+```
+Step 1: Agent arrives → reads AGIS document + data manifest
+Step 2: Agent sends PROPOSE with desired endpoint definition
+Step 3: Service negotiates authorization (262) or accepts (263)
+Step 4: Agent calls the newly instantiated endpoint
+```
+
+New status codes: `261 Negotiation In Progress`, `262 Authorization
+Required for Negotiation`, `263 Endpoint Instantiated`,
+`460 Proposal Rejected`.
+
+### AGIS-Version Header
+
+Services that update their AGIS documents at runtime signal changes
+via the `AGIS-Version` response header. Agent runtimes detect version
+changes and re-fetch the AGIS document automatically, enabling
+real-time service adaptation without push notifications.
+
+---
+
+## Agent Identity and Registration
 
 ### Agent Birth Certificate
 
@@ -160,6 +238,11 @@ scope, and birth certificate fields. It never exposes executable
 content. File extensions (`.agent`, `.nomo`, `.agtp`) must not
 appear in canonical URIs.
 
+When the service is AGIS-conformant, resolving the root AGTP address
+also returns the AGIS document (`application/agis`) describing all
+available endpoints. A lightweight service summary is available at
+`/.well-known/agis.json` without credentials.
+
 ### Deployment Package Formats
 
 | Format | Type | Description |
@@ -179,6 +262,25 @@ enforced behavioral constraints.
 | 1 — Verified | DNS ownership challenge (RFC 8555) | `.nomo` required |
 | 2 — Org-Asserted | None | `.agent` or `.nomo` |
 | 3 — Experimental | None | Any; X- prefix required; not production-eligible |
+
+---
+
+## Tooling
+
+Python packages for working with AGTP and AGIS are available on PyPI:
+
+| Package | Description |
+|---|---|
+| `agis-sdk` | Core SDK — parse, validate, generate AGIS documents |
+| `agis-validator` | 8-pass AGIS document linter and CLI |
+| `agis-mcp` | Auto-generate MCP tools/list from AGIS documents |
+| `agtp-client` | AGTP protocol client library |
+| `agis-cli` | Command-line tools for AGIS authoring and validation |
+
+```bash
+pip install agis-validator
+agis validate myservice.agis
+```
 
 ---
 
@@ -209,18 +311,25 @@ https://datatracker.ietf.org/ipr/
 
 ## Rebuilding the I-D
 
-If you are contributing to the specification text, edit
-`draft-hood-independent-agtp-01.md` and rebuild:
+Edit `draft-hood-independent-agtp-03.md` and rebuild:
+
 ```bash
 # Install toolchain (once)
 pip install xml2rfc
-gem install kramdown-rfc2629
+gem install kramdown-rfc
 
-# Rebuild
-kramdown-rfc2629 draft-hood-independent-agtp-01.md > draft-hood-independent-agtp-01.xml
-xml2rfc draft-hood-independent-agtp-01.xml --text
-xml2rfc draft-hood-independent-agtp-01.xml --html
+# Rebuild all formats
+kdrfc draft-hood-independent-agtp-03.md
+
+# Or step by step
+kramdown-rfc draft-hood-independent-agtp-03.md > draft-hood-independent-agtp-03.xml
+xml2rfc draft-hood-independent-agtp-03.xml --text
+xml2rfc draft-hood-independent-agtp-03.xml --html
 ```
+
+The same toolchain applies to companion specs. The IETF Author Tools
+service at https://author-tools.ietf.org/ can also convert `.md`
+to `.xml`, `.txt`, and `.html` without a local install.
 
 ---
 
@@ -247,7 +356,7 @@ group stage. All feedback is welcome:
 
 - [chrishood.com](https://chrishood.com)
 - [nomotic.ai](https://nomotic.ai)
-- [@chrishood](https://linkedin.com/in/chrishood)
+- [linkedin.com/in/chrishood](https://linkedin.com/in/chrishood)
 
 ---
 
