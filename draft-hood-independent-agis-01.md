@@ -1,7 +1,7 @@
 ---
 title: "Agentic Grammar and Interface Specification (AGIS)"
 abbrev: "AGIS"
-docname: draft-hood-independent-agis-00
+docname: draft-hood-independent-agis-01
 category: info
 submissiontype: independent
 ipr: trust200902
@@ -67,12 +67,6 @@ informative:
     date: 2026
     seriesinfo:
       Working Paper: "Available by request. March 2026."
-  AGIS-TESTS:
-    title: "AGIS Conformance Test Suite"
-    author:
-      fullname: Chris Hood
-    date: 2026
-    target: https://agtp.io/agis/conformance
   FIELDING:
     title: "Architectural Styles and the Design of Network-based Software Architectures"
     author:
@@ -1003,7 +997,7 @@ of the intent statement. A similarity score below 0.3 (on a standard
 sentence-transformer scale) indicates likely inconsistency and SHOULD
 trigger a warning. A score below 0.1 SHOULD trigger a hard failure. This
 threshold is informative; implementations MAY adjust based on their chosen
-embedding model. The reference validator at {{AGIS-TESTS}} uses
+embedding model. The reference validator (agis-validator, PyPI) uses
 sentence-transformers/all-MiniLM-L6-v2 as the default embedding model.
 
 ## Validator Implementation Guidance
@@ -1013,9 +1007,9 @@ ecosystem adoption. The reference validator architecture consists of three
 components:
 
 (a) A structural validator (Passes 1, 2, 4, 5, 7, 8): implemented in any
-    language against the normative JSON Schema at
-    https://agtp.io/agis/schema/agis-1.0.json. A Python reference
-    implementation is maintained at https://agtp.io/agis/validator.
+    language against the normative JSON Schema for AGIS documents.
+    A Python reference implementation is provided in the agis-validator
+    package (agis-validator on PyPI).
 
 (b) A semantic class classifier (Pass 3): a lightweight binary classifier
     determining whether a method identifier belongs to the action-intent
@@ -1031,9 +1025,9 @@ components:
     small local model for binary pass/fail) is RECOMMENDED as a secondary
     pass for borderline cases.
 
-A VS Code extension and CLI tool for .agis file validation are maintained
-at https://agtp.io/agis/tooling. These tools are RECOMMENDED for
-organizations authoring AGIS documents before publication.
+A VS Code extension and CLI tool for .agis file validation are provided
+via the agis-tools and agis-cli packages (PyPI). These tools are
+RECOMMENDED for organizations authoring AGIS documents before publication.
 
 A document that passes all eight validation passes is a conforming AGIS
 document. Partial conformance is not defined; an AGIS document either
@@ -1048,9 +1042,9 @@ receiving a complete AGIS document at the AGTP root address.
 ## Conformance Testing
 
 Reference conformance test cases for each validation pass are maintained
-at {{AGIS-TESTS}}. Implementers of AGIS validators are RECOMMENDED to
-verify their implementations against the reference test suite before
-deployment.
+alongside the agis-validator package (PyPI). Implementers of AGIS
+validators are RECOMMENDED to verify their implementations against the
+reference test suite before deployment.
 
 A conforming AGIS validator MUST:
 
@@ -1086,12 +1080,10 @@ Canonical rules:
   - Arrays: JSON array syntax in JSON; YAML sequence syntax in YAML
 ~~~
 
-A formal JSON Schema for the AGIS document structure is maintained at:
-https://agtp.io/agis/schema/agis-1.0.json
-
-This JSON Schema is normative. AGIS validators MUST validate documents
-against this schema as part of Pass 1 (Structural) validation before
-proceeding to subsequent passes.
+A formal JSON Schema for the AGIS document structure will be maintained
+alongside the agis-validator package. This JSON Schema is normative.
+AGIS validators MUST validate documents against this schema as part of
+Pass 1 (Structural) validation before proceeding to subsequent passes.
 
 ## HTTP Transitional Binding
 
@@ -1823,8 +1815,8 @@ AGIS document by applying the reverse mapping:
     manually from the five categories).
 
 The resulting AGIS document will require manual review of semantic
-consistency (Pass 6) and MUST be validated against the AGIS conformance
-test suite {{AGIS-TESTS}} before publication.
+consistency (Pass 6) and MUST be validated using the agis-validator
+tool before publication.
 
 ## References
 
@@ -1855,13 +1847,12 @@ test suite {{AGIS-TESTS}} before publication.
 [HOOD2026]    Hood, C., "Semantic Method Naming and LLM Agent
               Accuracy: A Controlled Benchmark of REST/CRUD versus
               Agentive API Interface Design", Working Paper,
-              March 2026. Available by request.
+              Nomotic, Inc., March 2026. Available by request
+              at chris@nomotic.ai.
 
 [AGTP-METHODS] Hood, C., "AGTP Standard Extended Method Vocabulary",
               draft-hood-agtp-standard-methods-01, 2026.
 
-[AGIS-TESTS]  Hood, C., "AGIS Conformance Test Suite", Nomotic AI,
-              2026. https://agtp.io/agis/conformance
 
 [FIELDING]    Fielding, R.T., "Architectural Styles and the Design
               of Network-based Software Architectures", Doctoral
