@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>elemen — AGTP Browser</title>
+  <link rel="stylesheet" href="app.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">elemen</div>
+    <form id="address-form" class="address">
+      <select id="format" title="Response format">
+        <option value="json">json</option>
+        <option value="yaml">yaml</option>
+        <option value="html">html</option>
+      </select>
+      <input
+        id="uri"
+        type="text"
+        placeholder="agtp://&lt;agent-id&gt; or agtp://&lt;agent-id&gt;@host"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <button id="go" type="submit">Go</button>
+      <div class="menu-wrap">
+        <button id="menu-btn" type="button" title="Menu">⋮</button>
+        <div id="menu" class="menu hidden">
+          <button class="menu-item" data-action="toggle-history">History</button>
+          <button class="menu-item" data-action="clear-history">Clear history</button>
+          <hr />
+          <button class="menu-item" data-action="toggle-advanced">Advanced</button>
+        </div>
+      </div>
+    </form>
+  </header>
+
+  <section id="advanced" class="advanced hidden">
+    <label>
+      Registry
+      <input id="registry" type="text" placeholder="https://registry.agtp.io" />
+    </label>
+    <label class="checkbox">
+      <input id="insecure" type="checkbox" />
+      Plaintext (no TLS)
+    </label>
+    <label class="checkbox">
+      <input id="skip-verify" type="checkbox" />
+      Skip TLS verify
+    </label>
+  </section>
+
+  <nav class="tab-strip" id="tab-strip">
+    <div id="agent-tabs" class="agent-tabs"></div>
+    <button id="new-tab" class="new-tab" title="New tab">+</button>
+  </nav>
+
+  <section id="status" class="status idle">Ready.</section>
+
+  <main class="response">
+    <nav class="resp-tabs">
+      <button class="rtab active" data-tab="pretty">Pretty</button>
+      <button class="rtab" data-tab="raw">Raw</button>
+      <button class="rtab" data-tab="headers">Headers</button>
+      <button
+        class="rtab disabled"
+        data-tab="cert"
+        disabled
+        title="Cert &amp; signature — coming when the Agent Document spec adds these fields"
+      >Cert</button>
+    </nav>
+
+    <div id="pane-pretty" class="pane active">
+      <pre id="pretty-pre"></pre>
+      <iframe
+        id="pretty-iframe"
+        class="hidden"
+        sandbox=""
+        referrerpolicy="no-referrer"
+      ></iframe>
+    </div>
+    <div id="pane-raw" class="pane"><pre id="raw"></pre></div>
+    <div id="pane-headers" class="pane"><pre id="headers"></pre></div>
+    <div id="pane-cert" class="pane">
+      <div class="cert-placeholder">
+        <div class="cert-title">Certificate &amp; Signature</div>
+        <div class="cert-sub">
+          Not yet available. The v1 Agent Document doesn't carry signature
+          or certificate-chain fields. This pane will activate when those
+          fields land in a future spec revision.
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <aside id="history-panel" class="history hidden">
+    <div class="hist-head">
+      <h3>History</h3>
+      <button id="hist-close" class="hist-close" title="Close">×</button>
+    </div>
+    <ul id="history-list"></ul>
+    <div id="history-empty" class="hist-empty hidden">No history yet.</div>
+  </aside>
+
+  <script src="app.js"></script>
+</body>
+</html>
