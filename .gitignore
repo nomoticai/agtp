@@ -1,0 +1,158 @@
+# =============================================================================
+# AGTP repository .gitignore
+# =============================================================================
+# What never goes in this repo:
+#   1. Secrets (TLS keys, signing keys, API tokens, deploy keys)
+#   2. Production data (registry contents, audit logs, real customer agents)
+#   3. Build artifacts and caches
+#   4. OS / editor junk
+#
+# When in doubt, add it here. Once a secret is committed and pushed to a
+# public repo, treating it as compromised is the only safe response.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Secrets — never commit any of these, ever
+# -----------------------------------------------------------------------------
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+*.der
+id_rsa
+id_ed25519
+id_ecdsa
+id_dsa
+*.gpg
+*.asc
+
+# Environment files
+.env
+.env.*
+!.env.example
+secrets/
+credentials/
+
+# -----------------------------------------------------------------------------
+# Production / runtime data
+# -----------------------------------------------------------------------------
+# The registry's data file MUST live outside the repo on the VPS
+# (typically /var/lib/agtp/registry_data.json). Never commit this.
+registry_data.json
+v1/registry/registry_data.json
+
+# Server logs and audit trails
+*.log
+logs/
+v1/transcripts/
+transcripts/
+
+# Captured outputs from demo runs
+v1/transcripts/demo-output.txt
+v1/transcripts/server.log
+v1/transcripts/registry.log
+v1/transcripts/lauren.html
+v1/transcripts/lauren-card.png
+
+# Custom agent definitions added at runtime should be reviewed before
+# committing. The seed agents (Lauren) are tracked; runtime additions
+# go in agents-runtime/ which is gitignored.
+v1/server/agents-runtime/
+
+# -----------------------------------------------------------------------------
+# IETF draft build artifacts
+# -----------------------------------------------------------------------------
+.refcache/
+ietf/.refcache/
+*.txt.bak
+*.xml.bak
+
+# kramdown-rfc / xml2rfc output (generated from .md sources)
+ietf/draft-*-[0-9][0-9].txt
+ietf/draft-*-[0-9][0-9].xml
+ietf/draft-*-[0-9][0-9].html
+
+# Allow the markdown sources through
+!ietf/draft-*-[0-9][0-9].md
+
+# -----------------------------------------------------------------------------
+# Python build / cache
+# -----------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env-py/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# Type checkers
+.mypy_cache/
+.pyre/
+.pytype/
+
+# -----------------------------------------------------------------------------
+# Editor / IDE
+# -----------------------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# -----------------------------------------------------------------------------
+# OS junk
+# -----------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# -----------------------------------------------------------------------------
+# Local notes / scratchpads (don't accidentally publish drafts)
+# -----------------------------------------------------------------------------
+NOTES.md
+TODO.md
+SCRATCH.md
+*.scratch
+*.local
