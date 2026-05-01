@@ -133,7 +133,10 @@ def fetch_agent_document(
             },
         )
         sock.sendall(request.serialize())
-        sock.shutdown(socket.SHUT_WR)
+        # Note: do not call shutdown(SHUT_WR) here. On TLS-wrapped sockets,
+        # shutdown() sends a close_notify alert that terminates the session
+        # before the server can respond. Content-Length framing handles
+        # request boundaries without needing a half-close signal.
         reader = sock.makefile("rb")
         return wire.parse_response(reader)
     finally:
