@@ -7,8 +7,8 @@ capabilities. It is served in response to bare-URI lookups
 (`agtp://{agent-id}`) and via the DESCRIBE method.
 
 Media types:
-    application/agent+json    canonical wire format
-    application/agent+yaml    schema-style human-editable format
+    application/vnd.agtp.identity+json    canonical wire format
+    application/vnd.agtp.identity+yaml    human-editable form
 
 The eleven fields in this v1 schema are deliberately minimal. Future
 revisions will add: signature, trust_score, certificate_chain,
@@ -23,8 +23,8 @@ from datetime import datetime, timezone
 from typing import List, Optional
 
 
-CONTENT_TYPE_JSON = "application/agent+json"
-CONTENT_TYPE_YAML = "application/agent+yaml"
+CONTENT_TYPE_JSON = "application/vnd.agtp.identity+json"
+CONTENT_TYPE_YAML = "application/vnd.agtp.identity+yaml"
 CONTENT_TYPE_HTML = "text/html; charset=utf-8"
 
 # Field ordering for canonical serialization. Wire format uses this order

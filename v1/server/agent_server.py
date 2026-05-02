@@ -7,10 +7,10 @@ and --key flags enable it. For local development, --insecure permits
 plaintext.
 
 Method support (v1):
-  DESCRIBE  Returns the Agent Document. Content negotiated by Accept:
-              application/agent+json   -> JSON  (default)
-              application/agent+yaml   -> YAML
-              text/html                -> rendered identity card
+  DESCRIBE  Returns the Agent Identity Document. Content negotiated by Accept:
+              application/vnd.agtp.identity+json   -> JSON  (default)
+              application/vnd.agtp.identity+yaml   -> YAML
+              text/html                            -> rendered identity card
 
 Run:
   python agent_server.py --insecure --port 4480

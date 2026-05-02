@@ -45,12 +45,12 @@ historical reference.
   registry lookup
 - Form 1a (`agtp://{agent-id}@{host}`) bypasses the registry for direct
   resolution before federated infrastructure exists
-- Agent Documents in `application/agent+json` carry the eleven-field v1
-  identity schema
+- Agent Identity Documents in `application/vnd.agtp.identity+json` carry
+  the eleven-field v1 identity schema
 - Content negotiation produces JSON, YAML, or rendered HTML from the
   same URI based on the client's `Accept` header
-- DESCRIBE method serves Agent Documents over AGTP wire format on
-  port 4480
+- DESCRIBE method serves Agent Identity Documents over AGTP wire format
+  on port 4480
 
 ## Quick start (local)
 
