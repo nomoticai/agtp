@@ -28,7 +28,7 @@ back to integrity-only, which is trust-on-first-use for the key.
 
 Version 2 authenticates the epoch and TTL used for record/tombstone conflict
 resolution. Verification still accepts legacy version 1 records, but their
-unauthenticated epoch cannot supersede a signed tombstone.
+unauthenticated epoch cannot supersede a retained signed tombstone.
 """
 
 from __future__ import annotations
@@ -42,7 +42,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 SIGNING_ALG = "EdDSA"
 RECORD_PAYLOAD_VERSION = 2
-TOMBSTONE_PAYLOAD_VERSION = 1
+TOMBSTONE_PAYLOAD_VERSION = 2
 
 
 def _b64url(raw: bytes) -> str:
@@ -84,7 +84,6 @@ def tombstone_signing_payload(tombstone) -> bytes:
         "agent_id": tombstone.agent_id,
         "withdrawn_at": tombstone.withdrawn_at,
         "withdrawn_at_epoch": tombstone.withdrawn_at_epoch,
-        "retention_seconds": tombstone.retention_seconds,
     }
     return json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
 
@@ -94,6 +93,7 @@ def sign_record(record, signing_service) -> None:
     Sign ``record`` in place with an agent's :class:`SigningService`,
     embedding the public key so verifiers need no key lookup.
     """
+    record.validate()
     signature = signing_service.sign(signing_payload(record))
     record.signature = {
         "alg": SIGNING_ALG,
@@ -105,6 +105,7 @@ def sign_record(record, signing_service) -> None:
 
 def sign_tombstone(tombstone, signing_service) -> None:
     """Sign a withdrawal tombstone in place with an Ed25519 key."""
+    tombstone.validate()
     signature = signing_service.sign(tombstone_signing_payload(tombstone))
     tombstone.signature = {
         "alg": SIGNING_ALG,
@@ -140,6 +141,10 @@ def verify_record(record) -> bool:
     verifies over its canonical content using the embedded public key.
     Returns False (never raises) for unsigned or tampered records.
     """
+    try:
+        record.validate()
+    except (TypeError, ValueError, OverflowError):
+        return False
     sig = record.signature
     if not isinstance(sig, dict) or sig.get("alg") != SIGNING_ALG:
         return False
@@ -162,6 +167,10 @@ def verify_record(record) -> bool:
 
 def verify_tombstone(tombstone) -> bool:
     """Verify the signature and canonical content of a tombstone."""
+    try:
+        tombstone.validate()
+    except (TypeError, ValueError, OverflowError):
+        return False
     sig = tombstone.signature
     if not isinstance(sig, dict) or sig.get("alg") != SIGNING_ALG:
         return False

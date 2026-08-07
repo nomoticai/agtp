@@ -31,35 +31,65 @@ from presence.records import (
 class PresenceStore:
     """Coordinator-held map of Agent-ID -> PresenceRecord."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        tombstone_retention_seconds: int = DEFAULT_TOMBSTONE_RETENTION_SECONDS,
+    ) -> None:
+        try:
+            retention = int(tombstone_retention_seconds)
+            valid_retention = (
+                not isinstance(tombstone_retention_seconds, bool)
+                and retention >= 0
+                and retention == float(tombstone_retention_seconds)
+            )
+        except (TypeError, ValueError, OverflowError):
+            valid_retention = False
+        if not valid_retention:
+            raise ValueError(
+                "tombstone_retention_seconds must be a non-negative integer"
+            )
         self._lock = threading.RLock()
+        self.tombstone_retention_seconds = retention
         self._records: Dict[str, PresenceRecord] = {}
         self._tombstones: Dict[str, PresenceTombstone] = {}
+        self._tombstone_expires_at: Dict[str, Optional[float]] = {}
         #: capability token -> set of agent_ids carrying it.
         self._by_capability: Dict[str, Set[str]] = {}
 
     # -- mutation -----------------------------------------------------
 
-    def announce(self, record: PresenceRecord) -> bool:
+    def announce(
+        self, record: PresenceRecord, *, now: Optional[float] = None
+    ) -> bool:
         """Insert a presence record if it wins the current conflict state.
 
         A record newer than a retained tombstone may re-announce the agent,
         but a signed tombstone can only be superseded by the same signing
         key. Returns True if the local view changed.
         """
+        _now = time.time() if now is None else now
+        try:
+            record.validate()
+        except (TypeError, ValueError, OverflowError):
+            return False
         with self._lock:
+            self._sweep_locked(_now)
+            self._sweep_tombstones_locked(_now)
             existing = self._records.get(record.agent_id)
             if (
                 existing is not None
                 and existing.to_gossip_dict() == record.to_gossip_dict()
             ):
                 return True  # idempotent replay of the same announcement
-        return self.merge_record(record)
+        return self.merge_record(record, now=_now)
 
     def withdraw(
         self,
         agent_id: str,
         tombstone: Optional[PresenceTombstone] = None,
+        *,
+        now: Optional[float] = None,
     ) -> bool:
         """Replace a live record with a retained withdrawal tombstone.
 
@@ -67,13 +97,20 @@ class PresenceStore:
         the same key as the current record. Unsigned tombstones remain
         available for the existing non-verifying development mode.
         """
+        _now = time.time() if now is None else now
         with self._lock:
+            self._sweep_locked(_now)
+            self._sweep_tombstones_locked(_now)
             if agent_id not in self._records:
                 return False
             candidate = tombstone or PresenceTombstone(agent_id=agent_id)
             if candidate.agent_id != agent_id:
                 return False
-            return self._merge_tombstone_locked(candidate)
+            try:
+                candidate.validate()
+            except (TypeError, ValueError, OverflowError):
+                return False
+            return self._merge_tombstone_locked(candidate, now=_now)
 
     def _drop_indexes(self, agent_id: str) -> None:
         for cap, ids in list(self._by_capability.items()):
@@ -180,13 +217,24 @@ class PresenceStore:
                 for aid, tomb in self._tombstones.items()
             }
 
-    def merge_record(self, record: PresenceRecord) -> bool:
+    def merge_record(
+        self, record: PresenceRecord, *, now: Optional[float] = None
+    ) -> bool:
         """
         Merge a record received from a peer. Keeps the most recent by
         ``announced_at_epoch`` (last-writer-wins on announce time, per the
         PDD conflict rule). Returns True if the local view changed.
         """
+        _now = time.time() if now is None else now
+        try:
+            record.validate()
+        except (TypeError, ValueError, OverflowError):
+            return False
+        if record.is_expired(_now):
+            return False
         with self._lock:
+            self._sweep_locked(_now)
+            self._sweep_tombstones_locked(_now)
             tombstone = self._tombstones.get(record.agent_id)
             if tombstone is not None:
                 if tombstone.withdrawn_at_epoch >= record.announced_at_epoch:
@@ -203,24 +251,40 @@ class PresenceStore:
                 return False
             self._drop_indexes(record.agent_id)
             self._tombstones.pop(record.agent_id, None)
+            self._tombstone_expires_at.pop(record.agent_id, None)
             self._records[record.agent_id] = record
             for cap in record.result_entry.get("capabilities", []):
                 self._by_capability.setdefault(cap, set()).add(record.agent_id)
             return True
 
-    def merge_tombstone(self, tombstone: PresenceTombstone, *, verify=None) -> bool:
+    def merge_tombstone(
+        self,
+        tombstone: PresenceTombstone,
+        *,
+        verify=None,
+        now: Optional[float] = None,
+    ) -> bool:
         """Merge an authenticated withdrawal received from a peer.
 
         ``verify`` is an optional cryptographic predicate. Independently of
         it, signer continuity is enforced whenever the local live record or
         prior tombstone has an embedded key.
         """
+        try:
+            tombstone.validate()
+        except (TypeError, ValueError, OverflowError):
+            return False
         if verify is not None and not verify(tombstone):
             return False
+        _now = time.time() if now is None else now
         with self._lock:
-            return self._merge_tombstone_locked(tombstone)
+            self._sweep_locked(_now)
+            self._sweep_tombstones_locked(_now)
+            return self._merge_tombstone_locked(tombstone, now=_now)
 
-    def _merge_tombstone_locked(self, tombstone: PresenceTombstone) -> bool:
+    def _merge_tombstone_locked(
+        self, tombstone: PresenceTombstone, *, now: float
+    ) -> bool:
         previous = self._tombstones.get(tombstone.agent_id)
         if previous is not None:
             if previous.withdrawn_at_epoch >= tombstone.withdrawn_at_epoch:
@@ -235,14 +299,29 @@ class PresenceStore:
             record_is_signed = _recordsig.signature_public_key_text(record) is not None
             if (
                 (not record_is_signed or _recordsig.has_authenticated_conflict_epoch(record))
-                and record.announced_at_epoch >= tombstone.withdrawn_at_epoch
+                and record.announced_at_epoch > tombstone.withdrawn_at_epoch
             ):
                 return False
+
+        expiry = self._retention_deadline(now)
+        if previous is not None:
+            previous_expiry = self._tombstone_expires_at.get(tombstone.agent_id)
+            if previous_expiry is None or expiry is None:
+                expiry = None
+            else:
+                expiry = max(previous_expiry, expiry)
 
         self._drop_indexes(tombstone.agent_id)
         self._records.pop(tombstone.agent_id, None)
         self._tombstones[tombstone.agent_id] = tombstone
+        self._tombstone_expires_at[tombstone.agent_id] = expiry
         return True
+
+    def _retention_deadline(self, received_at: float) -> Optional[float]:
+        """Local GC deadline, measured from this receiver's first merge."""
+        if self.tombstone_retention_seconds == 0:
+            return None
+        return received_at + self.tombstone_retention_seconds
 
     @staticmethod
     def _same_signer(existing, incoming) -> bool:
@@ -330,11 +409,13 @@ class PresenceStore:
 
     def _sweep_tombstones_locked(self, now: float) -> int:
         expired = [
-            aid for aid, tombstone in self._tombstones.items()
-            if tombstone.is_expired(now)
+            aid for aid in self._tombstones
+            if self._tombstone_expires_at.get(aid) is not None
+            and now >= self._tombstone_expires_at[aid]
         ]
         for aid in expired:
             self._tombstones.pop(aid, None)
+            self._tombstone_expires_at.pop(aid, None)
         return len(expired)
 
     def count(self, *, now: Optional[float] = None) -> int:
@@ -349,14 +430,9 @@ class PresenceStore:
     def build_tombstone(
         self,
         agent_id: str,
-        *,
-        retention_seconds: int = DEFAULT_TOMBSTONE_RETENTION_SECONDS,
     ) -> PresenceTombstone:
         """Build an unsigned tombstone ready for the caller to sign."""
-        return PresenceTombstone(
-            agent_id=agent_id,
-            retention_seconds=retention_seconds,
-        )
+        return PresenceTombstone(agent_id=agent_id)
 
     def build_record(
         self,

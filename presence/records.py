@@ -28,6 +28,7 @@ used to propagate a graceful WITHDRAW through gossip anti-entropy.
 
 from __future__ import annotations
 
+import math
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -38,10 +39,25 @@ from typing import Any, Dict, List, Optional
 #: until M2; the field is recorded now so records are already TTL-shaped.
 DEFAULT_TTL_SECONDS = 60
 
-#: How long a graceful-withdrawal tombstone participates in gossip.  A
-#: finite retention window bounds memory, so deletion convergence is
-#: guaranteed only for peers that rejoin before this window closes.
+#: Receiver-side grace period for graceful-withdrawal tombstones.  This is
+#: local policy, not a value controlled by the withdrawing agent.
 DEFAULT_TOMBSTONE_RETENTION_SECONDS = 24 * 60 * 60
+
+
+def _finite_nonnegative(value: Any, name: str) -> float:
+    parsed = float(value)
+    if not math.isfinite(parsed) or parsed < 0:
+        raise ValueError(f"{name} must be a finite, non-negative number")
+    return parsed
+
+
+def _nonnegative_int(value: Any, name: str) -> int:
+    if isinstance(value, bool):
+        raise ValueError(f"{name} must be a non-negative integer")
+    parsed = int(value)
+    if parsed < 0 or parsed != float(value):
+        raise ValueError(f"{name} must be a non-negative integer")
+    return parsed
 
 
 def utc_now_iso() -> str:
@@ -128,10 +144,17 @@ class PresenceRecord:
     #: {"alg": ..., "jws": ...}. Present-but-unverified in M1.
     signature: Optional[Dict[str, Any]] = None
 
+    def validate(self) -> None:
+        """Reject state that cannot be ordered or expired consistently."""
+        self.announced_at_epoch = _finite_nonnegative(
+            self.announced_at_epoch, "announced_at_epoch"
+        )
+        self.ttl_seconds = _nonnegative_int(self.ttl_seconds, "ttl_seconds")
+
     def expires_at(self) -> Optional[float]:
         """Epoch at which this record ages out, or None if it never does
-        (``ttl_seconds <= 0`` disables aging)."""
-        if self.ttl_seconds <= 0:
+        (``ttl_seconds == 0`` disables aging)."""
+        if self.ttl_seconds == 0:
             return None
         return self.announced_at_epoch + self.ttl_seconds
 
@@ -187,7 +210,10 @@ class PresenceRecord:
     @classmethod
     def from_gossip_dict(cls, data: Dict[str, Any]) -> "PresenceRecord":
         """Reconstruct a record received from a peer during gossip."""
-        return cls(
+        raw_ttl = data.get("ttl_seconds", DEFAULT_TTL_SECONDS)
+        if raw_ttl is None:
+            raw_ttl = DEFAULT_TTL_SECONDS
+        record = cls(
             agent_id=str(data["agent_id"]),
             result_entry=dict(data.get("result_entry") or {}),
             scopes=list(data.get("scopes") or []),
@@ -195,10 +221,12 @@ class PresenceRecord:
             owner_domain=data.get("owner_domain"),
             announced_at=str(data.get("announced_at") or utc_now_iso()),
             announced_at_epoch=float(data.get("announced_at_epoch") or 0.0),
-            ttl_seconds=int(data.get("ttl_seconds") or DEFAULT_TTL_SECONDS),
+            ttl_seconds=raw_ttl,
             attachment=None,  # relay hint is node-local; not propagated
             signature=data.get("signature"),
         )
+        record.validate()
+        return record
 
 
 @dataclass
@@ -214,40 +242,29 @@ class PresenceTombstone:
     agent_id: str
     withdrawn_at: str = field(default_factory=utc_now_iso)
     withdrawn_at_epoch: float = field(default_factory=time.time)
-    retention_seconds: int = DEFAULT_TOMBSTONE_RETENTION_SECONDS
     signature: Optional[Dict[str, Any]] = None
 
-    def expires_at(self) -> Optional[float]:
-        """Epoch at which gossip may forget this tombstone.
-
-        ``retention_seconds <= 0`` retains the tombstone indefinitely.
-        """
-        if self.retention_seconds <= 0:
-            return None
-        return self.withdrawn_at_epoch + self.retention_seconds
-
-    def is_expired(self, now: float) -> bool:
-        expiry = self.expires_at()
-        return expiry is not None and now >= expiry
+    def validate(self) -> None:
+        """Reject state that cannot participate in deterministic ordering."""
+        self.withdrawn_at_epoch = _finite_nonnegative(
+            self.withdrawn_at_epoch, "withdrawn_at_epoch"
+        )
 
     def to_gossip_dict(self) -> Dict[str, Any]:
         return {
             "agent_id": self.agent_id,
             "withdrawn_at": self.withdrawn_at,
             "withdrawn_at_epoch": self.withdrawn_at_epoch,
-            "retention_seconds": self.retention_seconds,
             "signature": self.signature,
         }
 
     @classmethod
     def from_gossip_dict(cls, data: Dict[str, Any]) -> "PresenceTombstone":
-        raw_retention = data.get(
-            "retention_seconds", DEFAULT_TOMBSTONE_RETENTION_SECONDS
-        )
-        return cls(
+        tombstone = cls(
             agent_id=str(data["agent_id"]),
             withdrawn_at=str(data.get("withdrawn_at") or utc_now_iso()),
             withdrawn_at_epoch=float(data.get("withdrawn_at_epoch") or 0.0),
-            retention_seconds=int(raw_retention),
             signature=data.get("signature"),
         )
+        tombstone.validate()
+        return tombstone

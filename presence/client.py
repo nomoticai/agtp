@@ -101,7 +101,6 @@ def withdraw(
     agent_id: str,
     *,
     signing_service=None,
-    retention_seconds: Optional[int] = None,
     use_tls: bool = True,
     insecure_skip_verify: bool = False,
 ) -> wire.AGTPResponse:
@@ -116,10 +115,7 @@ def withdraw(
         from presence.records import PresenceTombstone
         from presence.recordsig import sign_tombstone
 
-        kwargs = {}
-        if retention_seconds is not None:
-            kwargs["retention_seconds"] = retention_seconds
-        tombstone = PresenceTombstone(agent_id=agent_id, **kwargs)
+        tombstone = PresenceTombstone(agent_id=agent_id)
         sign_tombstone(tombstone, signing_service)
         body = json.dumps({"tombstone": tombstone.to_gossip_dict()}).encode("utf-8")
     return send_method(

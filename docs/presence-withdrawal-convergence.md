@@ -1,62 +1,49 @@
 # Presence withdrawal convergence
 
-AGTP Presence represents a graceful `WITHDRAW` as a retained tombstone.
-The tombstone participates in the same `REPLICATE` anti-entropy exchange as
-live presence records, so a stale peer cannot restore a withdrawn record when
-it reconnects after a temporary partition.
+Without retained delete state, a peer that misses `WITHDRAW` can later send
+back its old presence record. The agent then appears to come back by itself.
 
-## Wire shape
+This implementation leaves a tombstone after `WITHDRAW` and exchanges it
+through the existing `REPLICATE` anti-entropy path. Coordinator signing signs
+hosted withdrawals. Gossip signature verification verifies tombstones like
+live records.
 
-`REPLICATE` keeps the existing `records` and `digest` fields and adds two
-optional fields:
+## Rules
 
-```json
-{
-  "tombstones": [
-    {
-      "agent_id": "...",
-      "withdrawn_at": "2026-08-08T00:00:00Z",
-      "withdrawn_at_epoch": 1786147200.0,
-      "retention_seconds": 86400,
-      "signature": {
-        "alg": "EdDSA",
-        "payload_version": 1,
-        "public_key": "...",
-        "value": "..."
-      }
-    }
-  ],
-  "tombstone_digest": {"...": 1786147200.0}
-}
-```
+- Signed tombstones and live records are ordered by their authenticated epoch.
+  A withdrawal wins a tie.
+- For signed state, the key must remain the same across announce, withdraw,
+  and a later re-announce.
+- `DISCOVER /population` does not return a record suppressed by a retained
+  valid tombstone.
+- The receiving coordinator chooses the base retention period. A withdrawal
+  carries no retention request.
+- The reference default is 24 hours, measured from the receiver's first merge.
+  `--presence-tombstone-retention-seconds 0` disables time-based tombstone GC.
+- Expired live records and invalid epoch or TTL values are not merged.
 
-Older peers can ignore these fields. Tombstone-aware peers merge tombstones
-before live records and return missing tombstones in the `REPLICATE` response.
+`REPLICATE` adds optional `tombstones` and `tombstone_digest` fields. Older
+peers ignore them, so a mixed-version deployment does not provide deletion
+convergence.
 
-## Conflict and authorization rules
+## Boundary
 
-- The newest authenticated state wins by announce/withdraw epoch.
-- A tombstone for an existing signed record must use the same Ed25519 key.
-- A newer record may supersede a signed tombstone only when it uses the same
-  key and its version 2 signature covers `announced_at_epoch` and
-  `ttl_seconds`.
-- Version 1 record signatures remain verifiable for compatibility, but their
-  unsigned conflict epoch cannot supersede a signed tombstone.
-- When signature verification is enabled for gossip, tombstone verification
-  is fail-closed as well.
+The finite guarantee applies only when disconnected peers rejoin and finish
+anti-entropy within the receiver's retention window. This is the same boundary
+that creates "zombie" data when a Cassandra replica stays away past its grace
+period. A peer absent longer than the configured window needs re-synchronizing
+from trusted current state. For non-expiring presence records
+(`ttl_seconds=0`), operators need to disable time-based tombstone GC and
+persist that state, or move to finite, periodically refreshed leases.
 
-For hosted records, the signing coordinator signs the tombstone. A foreign
-agent may submit its own signed tombstone in the `WITHDRAW` body.
+The reference store is in memory, so tombstones do not yet survive a
+coordinator restart.
 
-## Retention boundary
+Foreign state whose Genesis cannot be resolved keeps the existing
+trust-on-first-use limitation.
 
-The default tombstone retention is 24 hours. Deletion convergence is therefore
-guaranteed for peers that reconnect and complete anti-entropy within that
-window. A peer returning after the tombstone has been garbage-collected may
-still present stale state until the old record's TTL expires. Set
-`retention_seconds` to `0` only when indefinite retention and its memory cost
-are acceptable.
-
-Cryptographic signature verification proves possession of the embedded key.
-For an Agent-ID whose Genesis is not resolvable, the existing foreign-presence
-trust-on-first-use limitation still applies.
+The design follows the same two ideas used elsewhere: deletion markers with an
+operator-controlled grace period in
+[Cassandra](https://cassandra.apache.org/doc/latest/cassandra/managing/operating/compaction/tombstones.html)
+and finite, periodically republished provider records in
+[IPFS Kademlia](https://specs.ipfs.tech/routing/kad-dht/).
