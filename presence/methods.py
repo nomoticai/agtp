@@ -18,14 +18,10 @@ Methods handled (PDD §6.1 lifecycle + §14 Q1 population path):
                               ``DISCOVER /agents`` (a single server's
                               hosted inventory).
 
-M1 constraints, kept honest:
-  * Only agents *hosted on this coordinator* may ANNOUNCE — the record is
-    built from the coordinator's own trusted AgentDocument. Foreign,
-    self-signed announcements need JWS verification, which lands in M3.
-  * PROBE returns a plain 404 for an unknown Agent-ID; the
-    invisible-vs-nonexistent indistinguishability guarantee is M2.
-  * The population response is unsigned; the ``ans_signature`` envelope
-    and ranking land in M3.
+Hosted records are built from the coordinator's trusted AgentDocument.
+Foreign records and foreign withdrawal tombstones require valid Ed25519
+signatures; when Genesis is resolvable, their signing key is bound to the
+Agent-ID. The same 404 shape covers absent and invisible PROBE targets.
 """
 
 from __future__ import annotations
@@ -39,7 +35,7 @@ from presence import ranking as _ranking
 from presence import recordsig as _recordsig
 from presence import scopes as _scopes
 from presence import visibility as _vis
-from presence.records import DEFAULT_TTL_SECONDS, Visibility
+from presence.records import DEFAULT_TTL_SECONDS, PresenceTombstone, Visibility
 from presence.visibility import RequesterContext
 from server.methods import error_response, json_response, parse_body
 
@@ -70,7 +66,7 @@ def maybe_handle_presence(
     if method == "ANNOUNCE":
         return _handle_announce(request, registry, store)
     if method == "WITHDRAW":
-        return _handle_withdraw(request, store)
+        return _handle_withdraw(request, registry, store)
     if method == "PROBE":
         return _handle_probe(request, registry, store)
     if method == "DISCOVER" and path == _POPULATION_PATH:
@@ -261,7 +257,12 @@ def _handle_announce(
             _recordsig.sign_record(record, signing)
         except Exception:  # noqa: BLE001 - never fail announce on a signing error
             pass
-    store.announce(record)
+    if not store.announce(record):
+        return error_response(
+            409, "Conflict", "announce-conflicts-with-withdrawal",
+            "the announcement is not newer than the retained withdrawal "
+            "or was signed by a different key.",
+        )
     return json_response(
         200, "OK",
         {
@@ -298,7 +299,12 @@ def _announce_foreign_record(registry, store, raw_record) -> wire.AGTPResponse:
             403, "Forbidden", "announce-key-binding-invalid",
             "record signing key is not bound to this agent's Genesis.",
         )
-    store.announce(record)
+    if not store.announce(record):
+        return error_response(
+            409, "Conflict", "announce-conflicts-with-withdrawal",
+            "the announcement is not newer than the retained withdrawal "
+            "or was signed by a different key.",
+        )
     return json_response(
         200, "OK",
         {
@@ -314,16 +320,79 @@ def _announce_foreign_record(registry, store, raw_record) -> wire.AGTPResponse:
 
 def _handle_withdraw(
     request: wire.AGTPRequest,
+    registry: Any,
     store: Any,
 ) -> wire.AGTPResponse:
     params = _merged_params(request)
+    raw_tombstone = params.get("tombstone")
     agent_id = _subject_agent_id(request, params)
+    if not agent_id and isinstance(raw_tombstone, dict):
+        raw_agent_id = raw_tombstone.get("agent_id")
+        if isinstance(raw_agent_id, str):
+            agent_id = raw_agent_id
     if not agent_id:
         return error_response(
             400, "Bad Request", "withdraw-missing-agent-id",
             "WITHDRAW requires an agent_id (body/query param or Agent-ID header).",
         )
-    withdrawn = store.withdraw(agent_id)
+
+    tombstone = None
+    if raw_tombstone is not None:
+        if not isinstance(raw_tombstone, dict):
+            return error_response(
+                400, "Bad Request", "withdraw-bad-tombstone",
+                "tombstone must be a JSON object.",
+            )
+        try:
+            tombstone = PresenceTombstone.from_gossip_dict(raw_tombstone)
+        except (KeyError, TypeError, ValueError) as exc:
+            return error_response(
+                400, "Bad Request", "withdraw-bad-tombstone",
+                f"malformed tombstone: {exc}",
+            )
+        if tombstone.agent_id != agent_id:
+            return error_response(
+                400, "Bad Request", "withdraw-agent-id-mismatch",
+                "the tombstone Agent-ID must match the WITHDRAW target.",
+            )
+        if not _recordsig.verify_tombstone(tombstone):
+            return error_response(
+                403, "Forbidden", "withdraw-signature-invalid",
+                "a supplied tombstone must carry a valid signature.",
+            )
+        resolver = getattr(registry, "lookup_genesis", None)
+        genesis = resolver(agent_id) if callable(resolver) else None
+        if genesis is not None and not _recordsig.binds_to_genesis(tombstone, genesis):
+            return error_response(
+                403, "Forbidden", "withdraw-key-binding-invalid",
+                "tombstone signing key is not bound to this agent's Genesis.",
+            )
+        withdrawn = store.merge_tombstone(
+            tombstone, verify=_recordsig.verify_tombstone
+        )
+    else:
+        current = store.probe(agent_id)
+        if current is None:
+            withdrawn = False
+        else:
+            tombstone = store.build_tombstone(agent_id)
+            signing = getattr(registry, "signing_service", None)
+            if signing is not None:
+                try:
+                    _recordsig.sign_tombstone(tombstone, signing)
+                except Exception:  # noqa: BLE001
+                    return error_response(
+                        500, "Internal Server Error", "withdraw-signing-failed",
+                        "the coordinator could not sign the withdrawal.",
+                    )
+            withdrawn = store.withdraw(agent_id, tombstone=tombstone)
+
+    if tombstone is not None and not withdrawn and store.probe(agent_id) is not None:
+        return error_response(
+            409, "Conflict", "withdraw-conflicts-with-current-state",
+            "the tombstone is stale or its signing key does not match the "
+            "current signed presence state.",
+        )
     return json_response(
         200, "OK",
         {
@@ -331,6 +400,7 @@ def _handle_withdraw(
             "presence": "withdrawn" if withdrawn else "absent",
             "agent_id": agent_id,
             "population_size": store.count(),
+            "tombstone": tombstone.to_gossip_dict() if withdrawn else None,
         },
         method_name="WITHDRAW",
     )
@@ -557,13 +627,13 @@ def _handle_replicate(
 ) -> wire.AGTPResponse:
     """
     Coordinator-to-coordinator gossip anti-entropy (REPLICATE). Merges the
-    peer's records and returns the delta the peer is missing. This is a
-    full-state sync between full nodes, NOT visibility-filtered: records
-    carry their posture and are filtered per-requester at query time.
+    peer's live records and withdrawal tombstones and returns the deltas the
+    peer is missing. This is a full-state sync between full nodes, NOT
+    visibility-filtered: records carry their posture and are filtered
+    per-requester at query time.
 
-    When ``registry.presence_verify_signatures`` is set, records that carry
-    an invalid/absent signature are dropped, so a peer cannot inject a
-    forged or mutated announcement.
+    When ``registry.presence_verify_signatures`` is set, records and
+    tombstones with invalid/absent signatures are dropped.
     """
     try:
         body = parse_body(request)
@@ -579,7 +649,17 @@ def _handle_replicate(
         if getattr(registry, "presence_verify_signatures", False)
         else None
     )
-    reply = _gossip.apply_replicate(store, body, verify=verify)
+    verify_tombstone = (
+        _recordsig.verify_tombstone
+        if getattr(registry, "presence_verify_signatures", False)
+        else None
+    )
+    reply = _gossip.apply_replicate(
+        store,
+        body,
+        verify=verify,
+        verify_tombstone=verify_tombstone,
+    )
     return json_response(200, "OK", reply, method_name=_gossip.GOSSIP_VERB)
 
 

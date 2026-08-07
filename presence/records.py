@@ -14,24 +14,21 @@ gossip payload described in the PDD §7.2::
       },
       "scopes": ["{capability: booking, region: us}", "{tier: 2}"],
       "timestamp": "2026-07-21T18:00:00Z",
-      "signature": {"alg": "ES256", "jws": "[base64]"}
+      "signature": {
+        "alg": "EdDSA",
+        "payload_version": 2,
+        "public_key": "[base64url]",
+        "value": "[base64url]"
+      }
     }
 
-M1 scope
---------
-The full three-axis visibility model (presence/disclosure/audience) is an
-M2 concern. M1 records default to ``public`` presence with ``capabilities``
-disclosure and an empty (everyone) audience, and the coordinator does not
-enforce the axes yet. The fields exist now so the wire shape is stable and
-M2 fills in enforcement without a record-format change.
-
-The ``signature`` slot is likewise carried but unverified in M1 (the v00
-codebase carries zero crypto on the presence path by design; JWS
-verification lands in M3).
+The same module defines :class:`PresenceTombstone`, the retained signed state
+used to propagate a graceful WITHDRAW through gossip anti-entropy.
 """
 
 from __future__ import annotations
 
+import math
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -41,6 +38,26 @@ from typing import Any, Dict, List, Optional
 #: Default announcement TTL, in seconds. TTL-based aging is not enforced
 #: until M2; the field is recorded now so records are already TTL-shaped.
 DEFAULT_TTL_SECONDS = 60
+
+#: Receiver-side grace period for graceful-withdrawal tombstones.  This is
+#: local policy, not a value controlled by the withdrawing agent.
+DEFAULT_TOMBSTONE_RETENTION_SECONDS = 24 * 60 * 60
+
+
+def _finite_nonnegative(value: Any, name: str) -> float:
+    parsed = float(value)
+    if not math.isfinite(parsed) or parsed < 0:
+        raise ValueError(f"{name} must be a finite, non-negative number")
+    return parsed
+
+
+def _nonnegative_int(value: Any, name: str) -> int:
+    if isinstance(value, bool):
+        raise ValueError(f"{name} must be a non-negative integer")
+    parsed = int(value)
+    if parsed < 0 or parsed != float(value):
+        raise ValueError(f"{name} must be a non-negative integer")
+    return parsed
 
 
 def utc_now_iso() -> str:
@@ -127,10 +144,17 @@ class PresenceRecord:
     #: {"alg": ..., "jws": ...}. Present-but-unverified in M1.
     signature: Optional[Dict[str, Any]] = None
 
+    def validate(self) -> None:
+        """Reject state that cannot be ordered or expired consistently."""
+        self.announced_at_epoch = _finite_nonnegative(
+            self.announced_at_epoch, "announced_at_epoch"
+        )
+        self.ttl_seconds = _nonnegative_int(self.ttl_seconds, "ttl_seconds")
+
     def expires_at(self) -> Optional[float]:
         """Epoch at which this record ages out, or None if it never does
-        (``ttl_seconds <= 0`` disables aging)."""
-        if self.ttl_seconds <= 0:
+        (``ttl_seconds == 0`` disables aging)."""
+        if self.ttl_seconds == 0:
             return None
         return self.announced_at_epoch + self.ttl_seconds
 
@@ -186,7 +210,10 @@ class PresenceRecord:
     @classmethod
     def from_gossip_dict(cls, data: Dict[str, Any]) -> "PresenceRecord":
         """Reconstruct a record received from a peer during gossip."""
-        return cls(
+        raw_ttl = data.get("ttl_seconds", DEFAULT_TTL_SECONDS)
+        if raw_ttl is None:
+            raw_ttl = DEFAULT_TTL_SECONDS
+        record = cls(
             agent_id=str(data["agent_id"]),
             result_entry=dict(data.get("result_entry") or {}),
             scopes=list(data.get("scopes") or []),
@@ -194,7 +221,50 @@ class PresenceRecord:
             owner_domain=data.get("owner_domain"),
             announced_at=str(data.get("announced_at") or utc_now_iso()),
             announced_at_epoch=float(data.get("announced_at_epoch") or 0.0),
-            ttl_seconds=int(data.get("ttl_seconds") or DEFAULT_TTL_SECONDS),
+            ttl_seconds=raw_ttl,
             attachment=None,  # relay hint is node-local; not propagated
             signature=data.get("signature"),
         )
+        record.validate()
+        return record
+
+
+@dataclass
+class PresenceTombstone:
+    """A signed, retained assertion that an Agent-ID was withdrawn.
+
+    Tombstones are exchanged separately from live records so an explicit
+    WITHDRAW can cross a temporary network partition instead of allowing a
+    peer's stale live record to resurrect the agent.  ``signature`` uses the
+    same inline Ed25519 shape as :class:`PresenceRecord`.
+    """
+
+    agent_id: str
+    withdrawn_at: str = field(default_factory=utc_now_iso)
+    withdrawn_at_epoch: float = field(default_factory=time.time)
+    signature: Optional[Dict[str, Any]] = None
+
+    def validate(self) -> None:
+        """Reject state that cannot participate in deterministic ordering."""
+        self.withdrawn_at_epoch = _finite_nonnegative(
+            self.withdrawn_at_epoch, "withdrawn_at_epoch"
+        )
+
+    def to_gossip_dict(self) -> Dict[str, Any]:
+        return {
+            "agent_id": self.agent_id,
+            "withdrawn_at": self.withdrawn_at,
+            "withdrawn_at_epoch": self.withdrawn_at_epoch,
+            "signature": self.signature,
+        }
+
+    @classmethod
+    def from_gossip_dict(cls, data: Dict[str, Any]) -> "PresenceTombstone":
+        tombstone = cls(
+            agent_id=str(data["agent_id"]),
+            withdrawn_at=str(data.get("withdrawn_at") or utc_now_iso()),
+            withdrawn_at_epoch=float(data.get("withdrawn_at_epoch") or 0.0),
+            signature=data.get("signature"),
+        )
+        tombstone.validate()
+        return tombstone

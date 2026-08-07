@@ -6,6 +6,8 @@ binding, signed foreign ANNOUNCE, and gossip signature verification.
 from __future__ import annotations
 
 import json
+import math
+import time
 import unittest
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -15,7 +17,7 @@ from core.genesis import AgentGenesis, public_key_pem, utc_now_iso
 from presence import client as pc
 from presence import gossip as g
 from presence import recordsig as rs
-from presence.records import PresenceRecord, Visibility
+from presence.records import PresenceRecord, PresenceTombstone, Visibility
 from presence.store import PresenceStore
 from presence.testing import InProcessCoordinator, make_doc
 from server.signing import SigningService
@@ -63,11 +65,46 @@ class IntegrityTests(unittest.TestCase):
         rec.visibility = Visibility(presence_mode="invisible")
         self.assertFalse(rs.verify_record(rec))
 
+    def test_tampered_conflict_epoch_fails(self):
+        rec = _record("a" * 64)
+        rs.sign_record(rec, self.svc)
+        rec.announced_at_epoch += 10_000
+        self.assertFalse(rs.verify_record(rec))
+
+    def test_sign_then_verify_tombstone(self):
+        tombstone = PresenceTombstone(agent_id="a" * 64)
+        rs.sign_tombstone(tombstone, self.svc)
+        self.assertEqual(tombstone.signature["payload_version"], 2)
+        self.assertTrue(rs.verify_tombstone(tombstone))
+        tombstone.withdrawn_at_epoch += 1
+        self.assertFalse(rs.verify_tombstone(tombstone))
+
     def test_gossip_roundtrip_preserves_signature(self):
         rec = _record("a" * 64)
         rs.sign_record(rec, self.svc)
         clone = PresenceRecord.from_gossip_dict(rec.to_gossip_dict())
         self.assertTrue(rs.verify_record(clone))
+
+    def test_gossip_roundtrip_preserves_zero_ttl(self):
+        rec = _record("a" * 64)
+        rec.ttl_seconds = 0
+        rs.sign_record(rec, self.svc)
+        clone = PresenceRecord.from_gossip_dict(rec.to_gossip_dict())
+        self.assertEqual(clone.ttl_seconds, 0)
+        self.assertTrue(rs.verify_record(clone))
+
+    def test_non_finite_epochs_do_not_verify(self):
+        for value in (math.nan, math.inf, -1.0):
+            rec = _record("a" * 64)
+            rec.announced_at_epoch = value
+            rec.signature = {"alg": "EdDSA"}
+            self.assertFalse(rs.verify_record(rec))
+
+            tombstone = PresenceTombstone(
+                agent_id="a" * 64, withdrawn_at_epoch=value
+            )
+            tombstone.signature = {"alg": "EdDSA"}
+            self.assertFalse(rs.verify_tombstone(tombstone))
 
 
 # ---------------------------------------------------------------------------
@@ -126,6 +163,10 @@ class ForeignAnnounceTests(unittest.TestCase):
             r = pc.announce_signed_record(coord.host, coord.port, rec, key, use_tls=False)
             self.assertEqual(r.status_code, 200)
             self.assertTrue(json.loads(r.body_bytes.decode())["verified"])
+            replay = pc.announce_signed_record(
+                coord.host, coord.port, rec, key, use_tls=False
+            )
+            self.assertEqual(replay.status_code, 200)
             d = pc.discover_population_json(
                 coord.host, coord.port, capability="validate", use_tls=False
             )
@@ -165,6 +206,32 @@ class ForeignAnnounceTests(unittest.TestCase):
                 body=body, body_content_type="application/json", use_tls=False,
             )
             self.assertEqual(r.status_code, 403)
+        finally:
+            coord.stop()
+
+    def test_signed_foreign_withdraw_accepted(self):
+        coord = InProcessCoordinator([]).start()
+        try:
+            key = SigningService(private_key=Ed25519PrivateKey.generate())
+            rec = _record("9" * 64, name="foreign")
+            announced = pc.announce_signed_record(
+                coord.host, coord.port, rec, key, use_tls=False
+            )
+            self.assertEqual(announced.status_code, 200)
+
+            withdrawn = pc.withdraw(
+                coord.host,
+                coord.port,
+                rec.agent_id,
+                signing_service=key,
+                use_tls=False,
+            )
+            self.assertEqual(withdrawn.status_code, 200)
+            self.assertIsNone(coord.store.probe(rec.agent_id))
+            body = json.loads(withdrawn.body_bytes.decode())
+            self.assertTrue(rs.verify_tombstone(
+                PresenceTombstone.from_gossip_dict(body["tombstone"])
+            ))
         finally:
             coord.stop()
 
@@ -213,6 +280,208 @@ class GossipVerifyTests(unittest.TestCase):
         dst = PresenceStore()
         reply = g.apply_replicate(dst, g.build_replicate_request(src))
         self.assertEqual(reply["merged"], 1)
+
+    def test_different_signer_cannot_delete_signed_record(self):
+        owner = SigningService(private_key=Ed25519PrivateKey.generate())
+        attacker = SigningService(private_key=Ed25519PrivateKey.generate())
+        base = time.time()
+        rec = _record("a" * 64)
+        rec.announced_at_epoch = base
+        rec.ttl_seconds = 0
+        rs.sign_record(rec, owner)
+        dst = PresenceStore()
+        dst.announce(rec)
+
+        tombstone = PresenceTombstone(
+            agent_id=rec.agent_id,
+            withdrawn_at_epoch=base + 1,
+        )
+        rs.sign_tombstone(tombstone, attacker)
+        src = PresenceStore()
+        self.assertTrue(src.merge_tombstone(tombstone, verify=rs.verify_tombstone))
+
+        reply = g.apply_replicate(
+            dst,
+            g.build_replicate_request(src),
+            verify=rs.verify_record,
+            verify_tombstone=rs.verify_tombstone,
+        )
+        self.assertEqual(reply["tombstones_merged"], 0)
+        self.assertIsNotNone(dst.probe(rec.agent_id))
+
+    def test_newer_same_signer_record_supersedes_tombstone(self):
+        owner = SigningService(private_key=Ed25519PrivateKey.generate())
+        store = PresenceStore()
+        base = time.time()
+        rec = _record("a" * 64, name="v1")
+        rec.announced_at_epoch = base
+        rec.ttl_seconds = 0
+        rs.sign_record(rec, owner)
+        store.announce(rec)
+
+        tombstone = PresenceTombstone(
+            agent_id=rec.agent_id,
+            withdrawn_at_epoch=base + 1,
+        )
+        rs.sign_tombstone(tombstone, owner)
+        self.assertTrue(store.merge_tombstone(
+            tombstone, verify=rs.verify_tombstone
+        ))
+
+        replacement = _record("a" * 64, name="v2")
+        replacement.announced_at_epoch = base + 2
+        replacement.ttl_seconds = 0
+        rs.sign_record(replacement, owner)
+        self.assertTrue(store.merge_record(replacement))
+        self.assertEqual(store.probe(rec.agent_id).result_entry["name"], "v2")
+
+    def test_partition_rejoin_converges_on_signed_withdrawal(self):
+        signing = SigningService(private_key=Ed25519PrivateKey.generate())
+        coord_a = InProcessCoordinator(
+            [make_doc("a" * 64, "worker", ["VALIDATE"])],
+            signing_service=signing,
+            verify_signatures=True,
+        ).start()
+        coord_b = InProcessCoordinator(
+            [], verify_signatures=True
+        ).start()
+        try:
+            # Connected: B first learns A's signed live record.
+            g.gossip_once(
+                coord_a.store,
+                coord_b.host,
+                coord_b.port,
+                use_tls=False,
+                verify=rs.verify_record,
+                verify_tombstone=rs.verify_tombstone,
+            )
+            self.assertIsNotNone(coord_b.store.probe("a" * 64))
+
+            # Partition: no gossip occurs while A withdraws; B stays stale.
+            response = pc.withdraw(
+                coord_a.host, coord_a.port, "a" * 64, use_tls=False
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertIsNone(coord_a.store.probe("a" * 64))
+            self.assertIsNotNone(coord_b.store.probe("a" * 64))
+            local_results = pc.discover_population_json(
+                coord_a.host,
+                coord_a.port,
+                capability="validate",
+                use_tls=False,
+            )
+            self.assertEqual(local_results["total_matches"], 0)
+
+            # Rejoin from the stale side. A rejects B's old live record and
+            # returns its tombstone; B applies it in the same round.
+            g.gossip_once(
+                coord_b.store,
+                coord_a.host,
+                coord_a.port,
+                use_tls=False,
+                verify=rs.verify_record,
+                verify_tombstone=rs.verify_tombstone,
+            )
+            self.assertIsNone(coord_a.store.probe("a" * 64))
+            self.assertIsNone(coord_b.store.probe("a" * 64))
+            peer_results = pc.discover_population_json(
+                coord_b.host,
+                coord_b.port,
+                capability="validate",
+                use_tls=False,
+            )
+            self.assertEqual(peer_results["total_matches"], 0)
+
+            # A further round must not resurrect the withdrawn record.
+            g.gossip_once(
+                coord_a.store,
+                coord_b.host,
+                coord_b.port,
+                use_tls=False,
+                verify=rs.verify_record,
+                verify_tombstone=rs.verify_tombstone,
+            )
+            self.assertIsNone(coord_a.store.probe("a" * 64))
+            self.assertIsNone(coord_b.store.probe("a" * 64))
+        finally:
+            coord_a.stop()
+            coord_b.stop()
+
+
+class TombstoneRetentionTests(unittest.TestCase):
+    def setUp(self):
+        self.key = SigningService(private_key=Ed25519PrivateKey.generate())
+        self.agent_id = "d" * 64
+
+    def _signed_record(self, *, epoch: float, ttl: int) -> PresenceRecord:
+        record = _record(self.agent_id)
+        record.announced_at_epoch = epoch
+        record.ttl_seconds = ttl
+        rs.sign_record(record, self.key)
+        return record
+
+    def _signed_tombstone(self, *, epoch: float) -> PresenceTombstone:
+        tombstone = PresenceTombstone(
+            agent_id=self.agent_id,
+            withdrawn_at_epoch=epoch,
+        )
+        rs.sign_tombstone(tombstone, self.key)
+        return tombstone
+
+    def test_retention_is_receiver_policy(self):
+        tombstone = self._signed_tombstone(epoch=100.0)
+        wire = tombstone.to_gossip_dict()
+        wire["retention_seconds"] = 0  # ignored legacy/sender hint
+
+        store = PresenceStore(tombstone_retention_seconds=10)
+        received = PresenceTombstone.from_gossip_dict(wire)
+        self.assertTrue(rs.verify_tombstone(received))
+        self.assertTrue(store.merge_tombstone(received, now=101.0))
+        self.assertEqual(len(store.all_tombstones(now=110.0)), 1)
+        self.assertEqual(store.all_tombstones(now=111.0), [])
+
+    def test_invalid_receiver_retention_is_rejected(self):
+        for value in (-1, 1.5, math.nan, math.inf, True):
+            with self.assertRaises(ValueError):
+                PresenceStore(tombstone_retention_seconds=value)
+
+    def test_retention_starts_when_receiver_accepts_tombstone(self):
+        store = PresenceStore(tombstone_retention_seconds=10)
+        tombstone = self._signed_tombstone(epoch=100.0)
+        self.assertTrue(store.merge_tombstone(tombstone, now=1_000.0))
+        self.assertEqual(len(store.all_tombstones(now=1_009.0)), 1)
+        self.assertEqual(store.all_tombstones(now=1_010.0), [])
+
+    def test_future_withdraw_epoch_does_not_extend_local_retention(self):
+        store = PresenceStore(tombstone_retention_seconds=10)
+        tombstone = self._signed_tombstone(epoch=1_000_000.0)
+        self.assertTrue(store.merge_tombstone(tombstone, now=100.0))
+        self.assertEqual(len(store.all_tombstones(now=109.0)), 1)
+        self.assertEqual(store.all_tombstones(now=110.0), [])
+
+    def test_zero_retention_keeps_delete_marker(self):
+        store = PresenceStore(tombstone_retention_seconds=0)
+        record = self._signed_record(epoch=100.0, ttl=0)
+        self.assertTrue(store.announce(record, now=100.0))
+
+        tombstone = self._signed_tombstone(epoch=110.0)
+        self.assertTrue(store.merge_tombstone(tombstone, now=110.0))
+        self.assertEqual(len(store.all_tombstones(now=10_000.0)), 1)
+        self.assertFalse(store.merge_record(record, now=10_000.0))
+
+    def test_equal_epoch_tombstone_wins_in_both_orders(self):
+        record = self._signed_record(epoch=100.0, ttl=0)
+        tombstone = self._signed_tombstone(epoch=100.0)
+
+        record_first = PresenceStore()
+        self.assertTrue(record_first.announce(record, now=100.0))
+        self.assertTrue(record_first.merge_tombstone(tombstone, now=100.0))
+        self.assertIsNone(record_first.probe(self.agent_id, now=100.0))
+
+        tombstone_first = PresenceStore()
+        self.assertTrue(tombstone_first.merge_tombstone(tombstone, now=100.0))
+        self.assertFalse(tombstone_first.merge_record(record, now=100.0))
+        self.assertIsNone(tombstone_first.probe(self.agent_id, now=100.0))
 
 
 class HostedSigningTests(unittest.TestCase):

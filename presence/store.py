@@ -1,17 +1,10 @@
 """
 The in-memory presence store — M1 coordinator state.
 
-A single coordinator holds every announced :class:`PresenceRecord` keyed
-by Agent-ID, plus a capability -> {agent_id} inverted index so the
-population query is an index lookup rather than a scan. This is the M1
-substitute for the DHT: at demo scale (n=2, one coordinator) routing is
-trivial, so the store is a dict with a lock.
-
-Deferred to later milestones (kept out on purpose):
-  * TTL aging / eviction sweeps (M2) — records are stored with their TTL
-    but never expired here yet;
-  * gossip replication to peer full nodes (M2/M4);
-  * DHT k-bucket routing (M4).
+A coordinator holds every live :class:`PresenceRecord` keyed by Agent-ID,
+retained withdrawal tombstones, and a capability -> {agent_id} inverted
+index. The store applies TTL aging and the conflict rules used by gossip
+anti-entropy. DHT k-bucket routing remains a separate layer.
 
 Thread-safety: the AGTP server handles each connection on its own thread,
 so every mutation and read takes ``self._lock``.
@@ -24,36 +17,100 @@ import time
 from typing import Dict, List, Optional, Set
 
 from core.identity import AgentDocument
+from presence import recordsig as _recordsig
 from presence import scopes as _scopes
-from presence.records import DEFAULT_TTL_SECONDS, PresenceRecord, Visibility
+from presence.records import (
+    DEFAULT_TOMBSTONE_RETENTION_SECONDS,
+    DEFAULT_TTL_SECONDS,
+    PresenceRecord,
+    PresenceTombstone,
+    Visibility,
+)
 
 
 class PresenceStore:
     """Coordinator-held map of Agent-ID -> PresenceRecord."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        tombstone_retention_seconds: int = DEFAULT_TOMBSTONE_RETENTION_SECONDS,
+    ) -> None:
+        try:
+            retention = int(tombstone_retention_seconds)
+            valid_retention = (
+                not isinstance(tombstone_retention_seconds, bool)
+                and retention >= 0
+                and retention == float(tombstone_retention_seconds)
+            )
+        except (TypeError, ValueError, OverflowError):
+            valid_retention = False
+        if not valid_retention:
+            raise ValueError(
+                "tombstone_retention_seconds must be a non-negative integer"
+            )
         self._lock = threading.RLock()
+        self.tombstone_retention_seconds = retention
         self._records: Dict[str, PresenceRecord] = {}
+        self._tombstones: Dict[str, PresenceTombstone] = {}
+        self._tombstone_expires_at: Dict[str, Optional[float]] = {}
         #: capability token -> set of agent_ids carrying it.
         self._by_capability: Dict[str, Set[str]] = {}
 
     # -- mutation -----------------------------------------------------
 
-    def announce(self, record: PresenceRecord) -> None:
-        """Insert or replace a presence record (ANNOUNCE is idempotent)."""
-        with self._lock:
-            self._drop_indexes(record.agent_id)
-            self._records[record.agent_id] = record
-            for cap in record.result_entry.get("capabilities", []):
-                self._by_capability.setdefault(cap, set()).add(record.agent_id)
+    def announce(
+        self, record: PresenceRecord, *, now: Optional[float] = None
+    ) -> bool:
+        """Insert a presence record if it wins the current conflict state.
 
-    def withdraw(self, agent_id: str) -> bool:
-        """Remove an agent's presence. Returns True if it was present."""
+        A record newer than a retained tombstone may re-announce the agent,
+        but a signed tombstone can only be superseded by the same signing
+        key. Returns True if the local view changed.
+        """
+        _now = time.time() if now is None else now
+        try:
+            record.validate()
+        except (TypeError, ValueError, OverflowError):
+            return False
         with self._lock:
-            existed = agent_id in self._records
-            self._drop_indexes(agent_id)
-            self._records.pop(agent_id, None)
-            return existed
+            self._sweep_locked(_now)
+            self._sweep_tombstones_locked(_now)
+            existing = self._records.get(record.agent_id)
+            if (
+                existing is not None
+                and existing.to_gossip_dict() == record.to_gossip_dict()
+            ):
+                return True  # idempotent replay of the same announcement
+        return self.merge_record(record, now=_now)
+
+    def withdraw(
+        self,
+        agent_id: str,
+        tombstone: Optional[PresenceTombstone] = None,
+        *,
+        now: Optional[float] = None,
+    ) -> bool:
+        """Replace a live record with a retained withdrawal tombstone.
+
+        Callers operating a signed store must supply a tombstone signed by
+        the same key as the current record. Unsigned tombstones remain
+        available for the existing non-verifying development mode.
+        """
+        _now = time.time() if now is None else now
+        with self._lock:
+            self._sweep_locked(_now)
+            self._sweep_tombstones_locked(_now)
+            if agent_id not in self._records:
+                return False
+            candidate = tombstone or PresenceTombstone(agent_id=agent_id)
+            if candidate.agent_id != agent_id:
+                return False
+            try:
+                candidate.validate()
+            except (TypeError, ValueError, OverflowError):
+                return False
+            return self._merge_tombstone_locked(candidate, now=_now)
 
     def _drop_indexes(self, agent_id: str) -> None:
         for cap, ids in list(self._by_capability.items()):
@@ -141,25 +198,145 @@ class PresenceStore:
             self._sweep_locked(_now)
             return {aid: rec.announced_at_epoch for aid, rec in self._records.items()}
 
-    def merge_record(self, record: PresenceRecord) -> bool:
+    def all_tombstones(
+        self, *, now: Optional[float] = None
+    ) -> List[PresenceTombstone]:
+        """Every retained withdrawal tombstone, for gossip push."""
+        _now = time.time() if now is None else now
+        with self._lock:
+            self._sweep_tombstones_locked(_now)
+            return list(self._tombstones.values())
+
+    def tombstone_digest(self, *, now: Optional[float] = None) -> Dict[str, float]:
+        """``{agent_id: withdrawn_at_epoch}`` for retained tombstones."""
+        _now = time.time() if now is None else now
+        with self._lock:
+            self._sweep_tombstones_locked(_now)
+            return {
+                aid: tomb.withdrawn_at_epoch
+                for aid, tomb in self._tombstones.items()
+            }
+
+    def merge_record(
+        self, record: PresenceRecord, *, now: Optional[float] = None
+    ) -> bool:
         """
         Merge a record received from a peer. Keeps the most recent by
         ``announced_at_epoch`` (last-writer-wins on announce time, per the
         PDD conflict rule). Returns True if the local view changed.
         """
+        _now = time.time() if now is None else now
+        try:
+            record.validate()
+        except (TypeError, ValueError, OverflowError):
+            return False
+        if record.is_expired(_now):
+            return False
         with self._lock:
+            self._sweep_locked(_now)
+            self._sweep_tombstones_locked(_now)
+            tombstone = self._tombstones.get(record.agent_id)
+            if tombstone is not None:
+                if tombstone.withdrawn_at_epoch >= record.announced_at_epoch:
+                    return False
+                if not self._same_signer(tombstone, record):
+                    return False
+                if (
+                    _recordsig.signature_public_key_text(tombstone) is not None
+                    and not _recordsig.has_authenticated_conflict_epoch(record)
+                ):
+                    return False
             existing = self._records.get(record.agent_id)
             if existing is not None and existing.announced_at_epoch >= record.announced_at_epoch:
                 return False
-            # announce() rebuilds the capability index for this agent_id.
             self._drop_indexes(record.agent_id)
+            self._tombstones.pop(record.agent_id, None)
+            self._tombstone_expires_at.pop(record.agent_id, None)
             self._records[record.agent_id] = record
             for cap in record.result_entry.get("capabilities", []):
                 self._by_capability.setdefault(cap, set()).add(record.agent_id)
             return True
 
+    def merge_tombstone(
+        self,
+        tombstone: PresenceTombstone,
+        *,
+        verify=None,
+        now: Optional[float] = None,
+    ) -> bool:
+        """Merge an authenticated withdrawal received from a peer.
+
+        ``verify`` is an optional cryptographic predicate. Independently of
+        it, signer continuity is enforced whenever the local live record or
+        prior tombstone has an embedded key.
+        """
+        try:
+            tombstone.validate()
+        except (TypeError, ValueError, OverflowError):
+            return False
+        if verify is not None and not verify(tombstone):
+            return False
+        _now = time.time() if now is None else now
+        with self._lock:
+            self._sweep_locked(_now)
+            self._sweep_tombstones_locked(_now)
+            return self._merge_tombstone_locked(tombstone, now=_now)
+
+    def _merge_tombstone_locked(
+        self, tombstone: PresenceTombstone, *, now: float
+    ) -> bool:
+        previous = self._tombstones.get(tombstone.agent_id)
+        if previous is not None:
+            if previous.withdrawn_at_epoch >= tombstone.withdrawn_at_epoch:
+                return False
+            if not self._same_signer(previous, tombstone):
+                return False
+
+        record = self._records.get(tombstone.agent_id)
+        if record is not None:
+            if not self._same_signer(record, tombstone):
+                return False
+            record_is_signed = _recordsig.signature_public_key_text(record) is not None
+            if (
+                (not record_is_signed or _recordsig.has_authenticated_conflict_epoch(record))
+                and record.announced_at_epoch > tombstone.withdrawn_at_epoch
+            ):
+                return False
+
+        expiry = self._retention_deadline(now)
+        if previous is not None:
+            previous_expiry = self._tombstone_expires_at.get(tombstone.agent_id)
+            if previous_expiry is None or expiry is None:
+                expiry = None
+            else:
+                expiry = max(previous_expiry, expiry)
+
+        self._drop_indexes(tombstone.agent_id)
+        self._records.pop(tombstone.agent_id, None)
+        self._tombstones[tombstone.agent_id] = tombstone
+        self._tombstone_expires_at[tombstone.agent_id] = expiry
+        return True
+
+    def _retention_deadline(self, received_at: float) -> Optional[float]:
+        """Local GC deadline, measured from this receiver's first merge."""
+        if self.tombstone_retention_seconds == 0:
+            return None
+        return received_at + self.tombstone_retention_seconds
+
+    @staticmethod
+    def _same_signer(existing, incoming) -> bool:
+        """Require key continuity when the existing state is signed."""
+        existing_key = _recordsig.signature_public_key_text(existing)
+        if existing_key is None:
+            return True
+        return existing_key == _recordsig.signature_public_key_text(incoming)
+
     def records_peer_needs(
-        self, remote_digest: Dict[str, float], *, now: Optional[float] = None
+        self,
+        remote_digest: Dict[str, float],
+        *,
+        remote_tombstone_digest: Optional[Dict[str, float]] = None,
+        now: Optional[float] = None,
     ) -> List[PresenceRecord]:
         """
         The live records a peer is missing or holds a staler copy of, given
@@ -170,10 +347,45 @@ class PresenceStore:
             self._sweep_locked(_now)
             out = []
             for aid, rec in self._records.items():
-                remote_epoch = remote_digest.get(aid)
-                if remote_epoch is None or rec.announced_at_epoch > remote_epoch:
+                remote_epoch = self._digest_epoch(remote_digest, aid)
+                remote_withdraw = self._digest_epoch(
+                    remote_tombstone_digest or {}, aid
+                )
+                remote_state = max(
+                    epoch for epoch in (remote_epoch, remote_withdraw)
+                    if epoch is not None
+                ) if remote_epoch is not None or remote_withdraw is not None else None
+                if remote_state is None or rec.announced_at_epoch > remote_state:
                     out.append(rec)
             return out
+
+    def tombstones_peer_needs(
+        self,
+        remote_digest: Dict[str, float],
+        *,
+        now: Optional[float] = None,
+    ) -> List[PresenceTombstone]:
+        """Retained tombstones a peer lacks or holds an older copy of."""
+        _now = time.time() if now is None else now
+        with self._lock:
+            self._sweep_tombstones_locked(_now)
+            out = []
+            for aid, tombstone in self._tombstones.items():
+                remote_epoch = self._digest_epoch(remote_digest, aid)
+                if (
+                    remote_epoch is None
+                    or tombstone.withdrawn_at_epoch > remote_epoch
+                ):
+                    out.append(tombstone)
+            return out
+
+    @staticmethod
+    def _digest_epoch(digest: Dict[str, float], agent_id: str) -> Optional[float]:
+        try:
+            value = digest.get(agent_id)
+            return None if value is None else float(value)
+        except (AttributeError, TypeError, ValueError):
+            return None
 
     def sweep_expired(self, now: Optional[float] = None) -> int:
         """
@@ -182,7 +394,9 @@ class PresenceStore:
         """
         _now = time.time() if now is None else now
         with self._lock:
-            return self._sweep_locked(_now)
+            removed = self._sweep_locked(_now)
+            self._sweep_tombstones_locked(_now)
+            return removed
 
     def _sweep_locked(self, now: float) -> int:
         expired = [
@@ -193,6 +407,17 @@ class PresenceStore:
             self._records.pop(aid, None)
         return len(expired)
 
+    def _sweep_tombstones_locked(self, now: float) -> int:
+        expired = [
+            aid for aid in self._tombstones
+            if self._tombstone_expires_at.get(aid) is not None
+            and now >= self._tombstone_expires_at[aid]
+        ]
+        for aid in expired:
+            self._tombstones.pop(aid, None)
+            self._tombstone_expires_at.pop(aid, None)
+        return len(expired)
+
     def count(self, *, now: Optional[float] = None) -> int:
         """Live population size (expired records swept first)."""
         _now = time.time() if now is None else now
@@ -201,6 +426,13 @@ class PresenceStore:
             return len(self._records)
 
     # -- record construction -----------------------------------------
+
+    def build_tombstone(
+        self,
+        agent_id: str,
+    ) -> PresenceTombstone:
+        """Build an unsigned tombstone ready for the caller to sign."""
+        return PresenceTombstone(agent_id=agent_id)
 
     def build_record(
         self,

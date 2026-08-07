@@ -1313,6 +1313,7 @@ def run(
     presence_peers: Optional[List[str]] = None,
     presence_require_scope: bool = False,
     presence_verify_signatures: bool = False,
+    presence_tombstone_retention_seconds: Optional[int] = None,
     ans_mode: bool = False,
     ans_endpoints: Optional[List[str]] = None,
 ) -> None:
@@ -1539,8 +1540,16 @@ def run(
     # through the presence pipeline), so --ans implies coordinator mode.
     coordinator = presence or ans_mode
     if coordinator:
+        from presence.records import DEFAULT_TOMBSTONE_RETENTION_SECONDS
         from presence.store import PresenceStore
-        registry.presence_store = PresenceStore()
+        tombstone_retention = (
+            DEFAULT_TOMBSTONE_RETENTION_SECONDS
+            if presence_tombstone_retention_seconds is None
+            else presence_tombstone_retention_seconds
+        )
+        registry.presence_store = PresenceStore(
+            tombstone_retention_seconds=tombstone_retention
+        )
         registry.presence_relay_endpoint = f"{host}:{port}"
         registry.presence_require_discovery_scope = presence_require_scope
         registry.presence_verify_signatures = presence_verify_signatures
@@ -1604,6 +1613,12 @@ def run(
                 __import__("presence.recordsig", fromlist=["verify_record"]).verify_record
                 if presence_verify_signatures else None
             )
+            _verify_tombstone = (
+                __import__(
+                    "presence.recordsig", fromlist=["verify_tombstone"]
+                ).verify_tombstone
+                if presence_verify_signatures else None
+            )
 
             def _presence_gossip_loop(store, peers):
                 while True:
@@ -1613,6 +1628,7 @@ def run(
                             store, peers, fanout=3,
                             use_tls=use_tls_peer, insecure_skip_verify=True,
                             verify=_verify,
+                            verify_tombstone=_verify_tombstone,
                         )
                     except Exception:  # noqa: BLE001 - keep the daemon alive
                         pass
@@ -1887,9 +1903,18 @@ def main() -> int:
         "--presence-verify-signatures",
         action="store_true",
         help=(
-            "Drop gossiped presence records with an invalid or absent "
-            "signature (M3). Off by default so mixed signed/unsigned "
-            "deployments keep converging."
+            "Drop gossiped presence records and tombstones with an invalid "
+            "or absent signature (M3). Off by default so mixed "
+            "signed/unsigned deployments keep converging."
+        ),
+    )
+    parser.add_argument(
+        "--presence-tombstone-retention-seconds",
+        type=int,
+        metavar="SECONDS",
+        help=(
+            "Local retention for presence withdrawal tombstones "
+            "(default: 86400; 0 disables time-based GC)."
         ),
     )
     parser.add_argument(
@@ -1930,6 +1955,13 @@ def main() -> int:
     if args.port_pos is not None and args.port_flag is not None:
         parser.error(
             "specify the port positionally or with --port, not both"
+        )
+    if (
+        args.presence_tombstone_retention_seconds is not None
+        and args.presence_tombstone_retention_seconds < 0
+    ):
+        parser.error(
+            "--presence-tombstone-retention-seconds must be non-negative"
         )
     port = args.port_pos if args.port_pos is not None else (
         args.port_flag if args.port_flag is not None else DEFAULT_PORT
@@ -2002,6 +2034,9 @@ def main() -> int:
         presence_peers=args.presence_peer,
         presence_require_scope=args.presence_require_scope,
         presence_verify_signatures=args.presence_verify_signatures,
+        presence_tombstone_retention_seconds=(
+            args.presence_tombstone_retention_seconds
+        ),
         ans_mode=args.ans,
         ans_endpoints=args.ans_endpoint,
     )
