@@ -14,20 +14,16 @@ gossip payload described in the PDD §7.2::
       },
       "scopes": ["{capability: booking, region: us}", "{tier: 2}"],
       "timestamp": "2026-07-21T18:00:00Z",
-      "signature": {"alg": "ES256", "jws": "[base64]"}
+      "signature": {
+        "alg": "EdDSA",
+        "payload_version": 2,
+        "public_key": "[base64url]",
+        "value": "[base64url]"
+      }
     }
 
-M1 scope
---------
-The full three-axis visibility model (presence/disclosure/audience) is an
-M2 concern. M1 records default to ``public`` presence with ``capabilities``
-disclosure and an empty (everyone) audience, and the coordinator does not
-enforce the axes yet. The fields exist now so the wire shape is stable and
-M2 fills in enforcement without a record-format change.
-
-The ``signature`` slot is likewise carried but unverified in M1 (the v00
-codebase carries zero crypto on the presence path by design; JWS
-verification lands in M3).
+The same module defines :class:`PresenceTombstone`, the retained signed state
+used to propagate a graceful WITHDRAW through gossip anti-entropy.
 """
 
 from __future__ import annotations
@@ -41,6 +37,11 @@ from typing import Any, Dict, List, Optional
 #: Default announcement TTL, in seconds. TTL-based aging is not enforced
 #: until M2; the field is recorded now so records are already TTL-shaped.
 DEFAULT_TTL_SECONDS = 60
+
+#: How long a graceful-withdrawal tombstone participates in gossip.  A
+#: finite retention window bounds memory, so deletion convergence is
+#: guaranteed only for peers that rejoin before this window closes.
+DEFAULT_TOMBSTONE_RETENTION_SECONDS = 24 * 60 * 60
 
 
 def utc_now_iso() -> str:
@@ -196,5 +197,57 @@ class PresenceRecord:
             announced_at_epoch=float(data.get("announced_at_epoch") or 0.0),
             ttl_seconds=int(data.get("ttl_seconds") or DEFAULT_TTL_SECONDS),
             attachment=None,  # relay hint is node-local; not propagated
+            signature=data.get("signature"),
+        )
+
+
+@dataclass
+class PresenceTombstone:
+    """A signed, retained assertion that an Agent-ID was withdrawn.
+
+    Tombstones are exchanged separately from live records so an explicit
+    WITHDRAW can cross a temporary network partition instead of allowing a
+    peer's stale live record to resurrect the agent.  ``signature`` uses the
+    same inline Ed25519 shape as :class:`PresenceRecord`.
+    """
+
+    agent_id: str
+    withdrawn_at: str = field(default_factory=utc_now_iso)
+    withdrawn_at_epoch: float = field(default_factory=time.time)
+    retention_seconds: int = DEFAULT_TOMBSTONE_RETENTION_SECONDS
+    signature: Optional[Dict[str, Any]] = None
+
+    def expires_at(self) -> Optional[float]:
+        """Epoch at which gossip may forget this tombstone.
+
+        ``retention_seconds <= 0`` retains the tombstone indefinitely.
+        """
+        if self.retention_seconds <= 0:
+            return None
+        return self.withdrawn_at_epoch + self.retention_seconds
+
+    def is_expired(self, now: float) -> bool:
+        expiry = self.expires_at()
+        return expiry is not None and now >= expiry
+
+    def to_gossip_dict(self) -> Dict[str, Any]:
+        return {
+            "agent_id": self.agent_id,
+            "withdrawn_at": self.withdrawn_at,
+            "withdrawn_at_epoch": self.withdrawn_at_epoch,
+            "retention_seconds": self.retention_seconds,
+            "signature": self.signature,
+        }
+
+    @classmethod
+    def from_gossip_dict(cls, data: Dict[str, Any]) -> "PresenceTombstone":
+        raw_retention = data.get(
+            "retention_seconds", DEFAULT_TOMBSTONE_RETENTION_SECONDS
+        )
+        return cls(
+            agent_id=str(data["agent_id"]),
+            withdrawn_at=str(data.get("withdrawn_at") or utc_now_iso()),
+            withdrawn_at_epoch=float(data.get("withdrawn_at_epoch") or 0.0),
+            retention_seconds=int(raw_retention),
             signature=data.get("signature"),
         )

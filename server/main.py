@@ -1604,6 +1604,12 @@ def run(
                 __import__("presence.recordsig", fromlist=["verify_record"]).verify_record
                 if presence_verify_signatures else None
             )
+            _verify_tombstone = (
+                __import__(
+                    "presence.recordsig", fromlist=["verify_tombstone"]
+                ).verify_tombstone
+                if presence_verify_signatures else None
+            )
 
             def _presence_gossip_loop(store, peers):
                 while True:
@@ -1613,6 +1619,7 @@ def run(
                             store, peers, fanout=3,
                             use_tls=use_tls_peer, insecure_skip_verify=True,
                             verify=_verify,
+                            verify_tombstone=_verify_tombstone,
                         )
                     except Exception:  # noqa: BLE001 - keep the daemon alive
                         pass

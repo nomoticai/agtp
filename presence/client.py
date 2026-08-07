@@ -100,15 +100,35 @@ def withdraw(
     port: int,
     agent_id: str,
     *,
+    signing_service=None,
+    retention_seconds: Optional[int] = None,
     use_tls: bool = True,
     insecure_skip_verify: bool = False,
 ) -> wire.AGTPResponse:
-    """WITHDRAW ``agent_id`` from the coordinator."""
+    """WITHDRAW ``agent_id`` from the coordinator.
+
+    A foreign agent can supply ``signing_service`` to submit a signed
+    tombstone. Hosted agents may omit it and let their signing coordinator
+    attest the withdrawal.
+    """
+    body = b""
+    if signing_service is not None:
+        from presence.records import PresenceTombstone
+        from presence.recordsig import sign_tombstone
+
+        kwargs = {}
+        if retention_seconds is not None:
+            kwargs["retention_seconds"] = retention_seconds
+        tombstone = PresenceTombstone(agent_id=agent_id, **kwargs)
+        sign_tombstone(tombstone, signing_service)
+        body = json.dumps({"tombstone": tombstone.to_gossip_dict()}).encode("utf-8")
     return send_method(
         agent_id,
         host,
         port,
         "WITHDRAW",
+        body=body,
+        body_content_type="application/json" if body else None,
         use_tls=use_tls,
         insecure_skip_verify=insecure_skip_verify,
     )
